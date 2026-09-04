@@ -46,6 +46,7 @@
 8. 長時間または複数AIが関与するTaskは、必要に応じてGitHub Issueを作業アンカーとして利用する。小さな単発修正まで一律にIssue必須とはしない。
 9. 進捗報告は必要に応じて COMPLETED / CURRENT / NEXT / BLOCKER / EVIDENCE の順で簡潔に行う。「作業中です」だけで終わらず、可能な操作を実行したうえで実確認済みの状態を報告する。
 10. 新規Projectでは規模に応じて文書を作る。最小構成はREADME.mdと必要なProjectローカルルールとし、DECISIONS.md / RUNBOOK.md / HANDOFF.md等は必要になった時点で作成する。形式だけの空ファイルを増やさない。
+11. ユーザーから「このチャット内容をリポジトリに保存して」または同等の保存指示を受けた場合、会話ログをそのまま保存しない。内容を確定仕様・重要な設計判断・再利用可能な運用手順・未完了の引き継ぎに分類し、対象Projectの既存の正本へ差分反映する。仕様はProjectの仕様書/README等、設計理由は必要時のみDECISIONS、手順は必要時のみRUNBOOK、一時状態はProject既定のHANDOFFへ保存する。Issue / PR / Actions / Commitで復元できる作業履歴はMarkdownへ重複保存しない。空ファイルを先回りで作らず、保存後は変更先と省略した情報をユーザーへ要約する。
 
 ## Context Handoff Protocol — 40% Rule
 
