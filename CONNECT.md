@@ -114,6 +114,7 @@ Verified scope:
 - 専用branchでの変更
 - commit / Pull Request作成
 - `oosaka0123-sudo/osaka-nextbus` でGitHub Issueへの `jules` ラベル付与により、Jules botの開始コメントとJules task起動を実確認
+- `oosaka0123-sudo/osaka-nextbus` でJules bot自身による専用branch作成とcommit pushを実確認
 
 Rule:
 - JulesはGoogleの開発Agentとして記録し、Gemini一般利用とは分けて扱います。
