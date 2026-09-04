@@ -195,15 +195,27 @@ MasterとProjectは別Repositoryのまま維持し、進捗・仕様をコピー
 
 Private Repositoryの名前・存在・内部情報は、明示承認なしにこのPublic Masterへ記録しません。
 
-## Update Rule
+## Automatic Update Rule
 
-`CONNECT.md` を更新するのは、接続状態または実確認できた能力が変わった時だけです。
+新しいAgent / LLM / MCP / Plugin / Connector / API等の接続、または既存接続の新しい能力を実アクセス・実ツール呼び出しで確認した場合、`CONNECT.md` が未記載または古ければ、そのSession内で短く更新します。
 
-更新対象の例:
-- 新しいAgent / MCP / Connectorで実アクセスが成功した
-- READだけだった接続でWRITEが確認できた
-- MCPが設定済みから実呼び出し成功へ変わった
-- 認証・権限変更で接続不能になった
+記録する内容:
+- Name / Type
+- Status
+- Verified date
+- Verified scope / capabilities
+- Limitations
+- Project-scopedの場合はその旨
+
+必須条件:
+- 推測では記録しない
+- `CONFIGURED` と `CONNECTED` を区別する
+- Secret / Token / Credential / 接続用秘密情報名を記録しない
+- 既存項目と重複させない
+- 1 Projectでの成功を全Project共通と扱わない
+- Public MasterへPrivate Repository情報を無断で記録しない
+
+`ai-master` へのWRITE権限がない場合は、未記載であることと追記すべき内容をユーザーへ報告します。
 
 更新しない例:
 - PRがマージされた

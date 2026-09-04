@@ -19,6 +19,7 @@
 13. 完了判定はEVIDENCEを伴うこと。コード生成または編集だけで「完成」と報告してはならない。Taskに該当する範囲で Implementation / Test / Review / PR / CI / Merge / Deploy / Live Verification / Documentation を確認する。未確認項目は未確認と明記する。
 14. AIが実行可能な操作は、Projectルールと安全境界の範囲内で可能な限りAIが実行する。ただし、default branchへのforce-push、Repository削除またはVisibility変更、Secret / Credential / IAM変更、Billing / 有料契約 / 課金上限変更、本番データの削除・破壊的Migration、ロールバック困難な不可逆操作、Project側でHuman Approval必須と定義された操作は、人間の明示承認なしに実行しない。通常のMergeやDeployは一律にHuman-onlyとはせず、Project側ルール、Branch Protection、CI結果、ユーザー方針で許可されている場合は実行可能とする。
 15. 秘密値がCommit / Issue / PR / Actions Log / 公開ファイルへ誤って記録された可能性を検知した場合は放置しない。秘密値そのものを再掲せず、直ちにユーザーへ報告し、Key / Token / Credentialの失効・再発行等の対応要否を確認する。
+16. 作業中に新しいAgent / LLM / MCP / Plugin / Connector / API等の接続または新しい能力を実アクセス・実ツール呼び出しで確認し、`CONNECT.md` が未記載または古い場合は、重複とPublic / Private境界を確認したうえで、そのSession内に短く更新する。`ai-master` へのWRITE権限がない場合は、未記載であることと追記すべき内容をユーザーへ報告する。
 
 ## GLOBAL MUST NOT
 
