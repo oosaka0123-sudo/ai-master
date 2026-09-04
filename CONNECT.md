@@ -106,13 +106,14 @@ Rule:
 
 Status: `CONNECTED / READ / WRITE`（Project-scoped evidence）
 
-Last observed: 2026-08-31 JST
+Last observed: 2026-09-04 JST
 
 Verified scope:
 - `oosaka0123-sudo/ai-agent` でJulesによる実装を確認
 - GitHub Issue / taskを起点にした作業
 - 専用branchでの変更
 - commit / Pull Request作成
+- `oosaka0123-sudo/osaka-nextbus` でGitHub Issueへの `jules` ラベル付与により、Jules botの開始コメントとJules task起動を実確認
 
 Rule:
 - JulesはGoogleの開発Agentとして記録し、Gemini一般利用とは分けて扱います。
