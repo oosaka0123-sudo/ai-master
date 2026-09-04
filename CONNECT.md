@@ -67,6 +67,7 @@ Operational note:
 
 Known limitation:
 - この接続から新規GitHub Repositoryそのものを作成する機能は現在利用できない。
+- 個別の書き込みpayloadは接続・安全レイヤーで拒否される場合がある。RepositoryのWRITE権限確認済みでも、特定操作の拒否を全体の接続断と解釈せず、対象操作だけをBLOCKEDとして別の安全な手段へ切り替える。
 
 ## ChatGPT → Gmail Connector
 
