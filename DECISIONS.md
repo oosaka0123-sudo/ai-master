@@ -73,3 +73,16 @@
 - Status: Accepted
 - Decision: `AGENTS.md` と本ファイルの根幹方針は、ユーザーの明示的な方針変更を根拠に更新する。
 - Reason: AIが自分の統制ルールを黙って緩める構造を避けるため。
+
+## ADR-012: Multi-Agent Execution Boundariesを採用する
+
+- Status: Accepted
+- Decision:
+  - 通常の実装Taskは原則として `1 Task = 1 Active Owner` とし、競争モードのみ別Branchでの独立実装を許可する。
+  - Task担当は特定Agent名へ固定せず、`CONNECT.md` と対象Projectで実確認できた能力・権限・実績に基づく Capability-based Routing を採用する。
+  - 完了判定はコード生成ではなく、Taskに該当する Test / Review / PR / CI / Merge / Deploy / Live Verification 等のEVIDENCEに基づく。
+  - AIが安全に実行可能な通常操作は可能な限りAIが完遂し、不可逆・秘密・権限・課金・破壊的操作にはHuman Gateを維持する。
+  - 同一原因・同一手段の失敗を繰り返さず、一定回数で別手段・別Agent・人間確認へ切り替えるCircuit Breakerを採用する。
+- Reason: Agent数・Project数が増えても、重複作業、古い能力前提、無限リトライ、未検証の完了報告、過度な人間操作、破壊的自動実行を防ぎながら、安全に可能な作業は自律継続できる状態を維持するため。
+- Agent Mapping: Claude Code / Jules / Codex / Copilot / Gemini等の製品名と役割はMasterの不変ルールとして固定しない。現在の能力と接続状態は `CONNECT.md` と対象ProjectのGitHub実態を正とする。
+- Automation Boundary: 通常のGitHub操作はProjectルール・Branch Protection・CI・ユーザー方針で許可される範囲に限りAI実行を許可する。force-push、Repository削除・Visibility変更、Secret / IAM / Billing変更、本番データ削除・破壊的Migration等の不可逆または高リスク操作は人間の明示承認を必要とする。
