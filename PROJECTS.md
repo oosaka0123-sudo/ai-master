@@ -65,6 +65,15 @@ Startup:
 - `release_manifest_v1_23.json`
 - Open Issues / Open PRs / Latest Actions
 
+### S.LEAGUE NOW
+Repository: `oosaka0123-sudo/sleague-now`
+
+Startup:
+- current default branchを確認
+- `README.md`
+- `AGENTS.md`
+- Open Issues / Open PRs / Latest Actions
+
 ### AI Agent
 Repository: `oosaka0123-sudo/ai-agent`
 
