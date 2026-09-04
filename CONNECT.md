@@ -23,6 +23,7 @@ Project進捗、Issue/PR番号、詳細仕様、認証情報、秘密値、接�
 - Agent / MCP / LLMの名前を混同しません。Claude Code、Jules、Codex、Copilot等は主にAgent / 開発サービスとして記録し、裏側の正確なLLMモデル名はセッションごとに変わり得るため、実確認できた場合だけ補足します。
 - 過去に接続できていても、新しいセッションでは必要に応じて再確認します。
 - 「設定済み」と「実際にツール呼び出し成功」は分けて記録します。
+- 接続確認のためだけに不要なユーザーデータ変更を行いません。能力確認はタスクに必要な範囲のread-only probeを優先し、`WRITE` は許可された実書き込み成功または同等の実Evidenceがある場合だけ記録します。
 
 ## GitHub Master Repository
 
@@ -66,6 +67,22 @@ Operational note:
 
 Known limitation:
 - この接続から新規GitHub Repositoryそのものを作成する機能は現在利用できない。
+
+## ChatGPT → Gmail Connector
+
+Type: Connector
+
+Status: `CONNECTED / READ`
+
+Verified: 2026-09-04 JST
+
+Verified capabilities:
+- 認証済みGmailへの実アクセス
+- Mailbox label metadata / message countの読み取り
+
+Limitations:
+- この棚卸しではメール送信・ラベル変更・アーカイブ等のWRITE操作は実行していないため、`WRITE` は宣言しません。
+- メールアドレス、本文、個人情報、認証情報はMasterへ保存しません。
 
 ## Claude Code → GitHub
 
