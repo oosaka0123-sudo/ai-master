@@ -20,6 +20,8 @@
 14. AIが実行可能な操作は、Projectルールと安全境界の範囲内で可能な限りAIが実行する。ただし、default branchへのforce-push、Repository削除またはVisibility変更、Secret / Credential / IAM変更、Billing / 有料契約 / 課金上限変更、本番データの削除・破壊的Migration、ロールバック困難な不可逆操作、Project側でHuman Approval必須と定義された操作は、人間の明示承認なしに実行しない。通常のMergeやDeployは一律にHuman-onlyとはせず、Project側ルール、Branch Protection、CI結果、ユーザー方針で許可されている場合は実行可能とする。
 15. 秘密値がCommit / Issue / PR / Actions Log / 公開ファイルへ誤って記録された可能性を検知した場合は放置しない。秘密値そのものを再掲せず、直ちにユーザーへ報告し、Key / Token / Credentialの失効・再発行等の対応要否を確認する。
 16. 作業中に新しいAgent / LLM / MCP / Plugin / Connector / API等の接続または新しい能力を実アクセス・実ツール呼び出しで確認し、`CONNECT.md` が未記載または古い場合は、重複とPublic / Private境界を確認したうえで、そのSession内に短く更新する。`ai-master` へのWRITE権限がない場合は、未記載であることと追記すべき内容をユーザーへ報告する。
+17. 横断処理のスコープ確定: 「全Project」「全Repository」等の指示では、Public対象集合を実行時点の最新 `PROJECTS.md` から導出し、過去チャット・HANDOFF・AIの記憶・古い固定リストを正本にしない。Private Repositoryはユーザーの明示指定または認証済み文脈で正当に対象確定できる場合のみ別スコープとして扱う。
+18. 完了前Reconciliation: 複数Repositoryへの一括処理は、完了宣言前に最新 `PROJECTS.md` の期待対象と実際の処理実績を再照合し、未処理差分がないことを確認する。差分がある場合は完了扱いにせず、未処理分を解決または明示する。
 
 ## GLOBAL MUST NOT
 
