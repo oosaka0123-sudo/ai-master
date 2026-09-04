@@ -13,6 +13,12 @@
 7. MasterとProjectへ同じ仕様・進捗を複製せず、Cross-Repositoryでは正本への参照を優先する。
 8. GLOBALルールとProject要求が重大に衝突し、安全に解決できない場合は差分を明示して人間へ確認する。
 9. コンテキスト使用率が40%以上になった場合、または40%到達を検知できない環境でも会話・作業履歴が長大化して引き継ぎ損失の危険が高いと判断した場合は、作業を止めずに、対象Project Repository内へ「完全版引き継ぎファイル」を作成または更新してから作業を継続する。Claude Codeについては `Claude Code Special Rule — Autocompact First` を優先し、初回は `/autocompact` による圧縮を先に試す。詳細は `Context Handoff Protocol` に従う。
+10. 通常の実装Taskは、原則として1 Taskにつき1 Active Ownerとする。Task開始前に、同一スコープの既存Issue / Branch / Pull Requestがないか確認する。他AgentはReview / Test / Research / Alternative Proposal等を担当し、同じ実装を無断で重複しない。意図的な競争モードでは、Agentごとに別Branchで独立実装する。
+11. Agent / Tool / MCP / Connectorの一部が利用不能でも、独立して安全に進められる作業まで停止しない。ただしSecurity、SSOT、仕様の重大衝突、不可逆操作など、人間判断が必要な条件では停止して確認する。未完了部分は対象Project側のIssueまたはHANDOFFへ残す。
+12. Taskの担当Agentは、製品名やベンダー名に固定せず、`CONNECT.md` と対象Projectで実確認できた能力・権限・実績に基づいて選択する。未確認の能力を前提にTaskを割り当てない。
+13. 完了判定はEVIDENCEを伴うこと。コード生成または編集だけで「完成」と報告してはならない。Taskに該当する範囲で Implementation / Test / Review / PR / CI / Merge / Deploy / Live Verification / Documentation を確認する。未確認項目は未確認と明記する。
+14. AIが実行可能な操作は、Projectルールと安全境界の範囲内で可能な限りAIが実行する。ただし、default branchへのforce-push、Repository削除またはVisibility変更、Secret / Credential / IAM変更、Billing / 有料契約 / 課金上限変更、本番データの削除・破壊的Migration、ロールバック困難な不可逆操作、Project側でHuman Approval必須と定義された操作は、人間の明示承認なしに実行しない。通常のMergeやDeployは一律にHuman-onlyとはせず、Project側ルール、Branch Protection、CI結果、ユーザー方針で許可されている場合は実行可能とする。
+15. 秘密値がCommit / Issue / PR / Actions Log / 公開ファイルへ誤って記録された可能性を検知した場合は放置しない。秘密値そのものを再掲せず、直ちにユーザーへ報告し、Key / Token / Credentialの失効・再発行等の対応要否を確認する。
 
 ## GLOBAL MUST NOT
 
@@ -24,6 +30,8 @@
 6. 確認していないAI接続、権限、レビュー、テストを実施済みとして記録しない。
 7. Security、SSOT、No fabrication等のGLOBALルールをProject都合で無効化しない。
 8. `AGENTS.md` または `DECISIONS.md` の根幹方針を、ユーザーの明示的な方針変更なしに変更しない。
+9. 同一原因・同一手段で失敗を無限に繰り返さない。同一アプローチで2回連続して失敗した場合は、OBSERVED / HYPOTHESIS / NEXT ACTIONを整理し、別手段・別Agent・別Tool・人間確認のいずれかへ切り替える。
+10. 新しい外部依存Package、Action、CDN、MCP、外部Serviceを、出所・必要性・安全性を確認せず自律的に導入しない。
 
 ## DEFAULT — Project側で上書き可能
 
@@ -34,6 +42,9 @@
 5. 複数AIが同じファイルを同時に独立編集しない。
 6. AIは実際に確認・実行した範囲だけを完了として報告する。
 7. 初回復元では全履歴を一括で読まず、必要情報を遅延ロードする。
+8. 長時間または複数AIが関与するTaskは、必要に応じてGitHub Issueを作業アンカーとして利用する。小さな単発修正まで一律にIssue必須とはしない。
+9. 進捗報告は必要に応じて COMPLETED / CURRENT / NEXT / BLOCKER / EVIDENCE の順で簡潔に行う。「作業中です」だけで終わらず、可能な操作を実行したうえで実確認済みの状態を報告する。
+10. 新規Projectでは規模に応じて文書を作る。最小構成はREADME.mdと必要なProjectローカルルールとし、DECISIONS.md / RUNBOOK.md / HANDOFF.md等は必要になった時点で作成する。形式だけの空ファイルを増やさない。
 
 ## Context Handoff Protocol — 40% Rule
 
