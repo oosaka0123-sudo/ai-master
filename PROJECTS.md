@@ -43,6 +43,16 @@ Startup:
 - Repository内のREADME / docs等の実在する開始ファイル
 - Open Issues / Open PRs / Latest Actions
 
+### 50PLUS
+Repository: `oosaka0123-sudo/50plus`
+
+Startup:
+- current default branchを確認
+- `AGENTS.md`
+- `README.md`
+- Claude Code利用時は `CLAUDE.md`
+- Open Issues / Open PRs / Latest Actions
+
 ### AI Agent
 Repository: `oosaka0123-sudo/ai-agent`
 
