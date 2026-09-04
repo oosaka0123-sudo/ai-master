@@ -1,4 +1,4 @@
-# AI MASTER Connection Registry
+# CONNECT.md — AI MASTER Connection Registry
 
 Last verified: 2026-09-04 JST
 
