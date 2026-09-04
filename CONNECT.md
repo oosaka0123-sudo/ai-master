@@ -1,6 +1,6 @@
 # CONNECT.md — AI MASTER Connection Registry
 
-Last verified: 2026-09-04 JST
+Last verified: 2026-09-05 JST
 
 このファイルは **接続状態と実確認できた能力だけ** を管理します。
 
@@ -86,6 +86,29 @@ Verified capabilities:
 Limitations:
 - この棚卸しではメール送信・ラベル変更・アーカイブ等のWRITE操作は実行していないため、`WRITE` は宣言しません。
 - メールアドレス、本文、個人情報、認証情報はMasterへ保存しません。
+
+## ChatGPT → Opera Browser Connector
+
+Type: Browser Connector / Plugin
+
+Status: `VERIFY_ON_START`
+
+Last observed: 2026-09-05 JST
+
+Observed:
+- ChatGPT側のPlugin directoryで `Opera Browser Connector` が利用可能な接続候補として表示された。
+- ユーザー向けのインストールカードとOpera側の認証・同意フローが実際に表示された。
+
+Not yet verified:
+- Operaブラウザ側でBrowser Connectorが有効化・接続完了した状態
+- ChatGPTから開いているタブの内容を読む実tool call
+- ページのスクリーンショット取得
+- タブ／ページ移動などのブラウザ操作
+
+Rule:
+- 上記のlive tool call成功を確認するまでは `CONNECTED` と記録しない。
+- ブラウザで扱う情報は、ユーザーが許可したタブとタスク範囲に限定する。
+- 閲覧履歴、認証情報、Cookie、個人情報はMasterへ保存しない。
 
 ## Claude Code → GitHub
 
