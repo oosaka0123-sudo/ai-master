@@ -53,6 +53,18 @@ Startup:
 - Claude Code利用時は `CLAUDE.md`
 - Open Issues / Open PRs / Latest Actions
 
+### FX-Clover
+Repository: `oosaka0123-sudo/fx-clover`
+
+Startup:
+- current default branchを確認
+- `README.md`
+- `AGENTS.md`
+- `docs/FX_Clover_正式引き継ぎ圧縮完全版_v1_23.md`
+- `FX_Clover_v1_23_README.md`
+- `release_manifest_v1_23.json`
+- Open Issues / Open PRs / Latest Actions
+
 ### AI Agent
 Repository: `oosaka0123-sudo/ai-agent`
 
