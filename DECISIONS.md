@@ -86,3 +86,15 @@
 - Reason: Agent数・Project数が増えても、重複作業、古い能力前提、無限リトライ、未検証の完了報告、過度な人間操作、破壊的自動実行を防ぎながら、安全に可能な作業は自律継続できる状態を維持するため。
 - Agent Mapping: Claude Code / Jules / Codex / Copilot / Gemini等の製品名と役割はMasterの不変ルールとして固定しない。現在の能力と接続状態は `CONNECT.md` と対象ProjectのGitHub実態を正とする。
 - Automation Boundary: 通常のGitHub操作はProjectルール・Branch Protection・CI・ユーザー方針で許可される範囲に限りAI実行を許可する。force-push、Repository削除・Visibility変更、Secret / IAM / Billing変更、本番データ削除・破壊的Migration等の不可逆または高リスク操作は人間の明示承認を必要とする。
+
+## ADR-013: PC電源OFF運用はGitHub Actions / API優先とする
+
+- Status: Accepted
+- Decision:
+  - 定型処理、監視、データ取得、更新、デプロイ、検証など、ブラウザUI操作を必要としない作業は GitHub Actions / API / Connector / MCP を第一選択とする。
+  - ブラウザ操作は API や GitHub 操作で代替できない場合の補助経路とし、PCローカルのブラウザや常時起動PCを24/7運用の必須依存にしない。
+  - Opera Browser Connector はPC起動時の補助経路として利用可能だが、全Project共通の常時運用基盤とはみなさない。
+  - ChatGPT Work / Cloud Browser等のクラウドブラウザも、ブラウザ操作が必要な場合の補助経路とし、常用を前提にしない。
+  - Secrets / Credential / IAM / Billingなどの既存Human Gateはこの方針変更によって緩和しない。
+- Reason: PC電源OFFでも継続可能な自動化を増やし、ローカル端末・ブラウザセッション・UI変更への依存を減らしつつ、トークン・運用コスト・障害点を抑えるため。
+- Execution Preference: Project側で同等の目的を達成できる場合は、GitHub Actions / API / Connector / MCP → クラウドブラウザ → ローカルブラウザの順で優先度を判断する。ただし、対象ProjectのSecurity・規約・API制約・コスト・実装難易度に応じてProject側で安全に上書き可能とする。
