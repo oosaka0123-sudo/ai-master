@@ -91,24 +91,22 @@ Limitations:
 
 Type: Browser Connector / Plugin
 
-Status: `VERIFY_ON_START`
+Status: `CONNECTED / READ`
 
-Last observed: 2026-09-05 JST
+Verified: 2026-09-05 JST
 
-Observed:
-- ChatGPT側のPlugin directoryで `Opera Browser Connector` が利用可能な接続候補として表示された。
-- ユーザー向けのインストールカードとOpera側の認証・同意フローが実際に表示された。
+Verified capabilities:
+- Opera Browser ConnectorのインストールとChatGPT接続
+- ChatGPTからOperaで開いているタブ一覧の実読み取り
+- タブID・タイトル・URL・active状態の取得
 
-Not yet verified:
-- Operaブラウザ側でBrowser Connectorが有効化・接続完了した状態
-- ChatGPTから開いているタブの内容を読む実tool call
-- ページのスクリーンショット取得
-- タブ／ページ移動などのブラウザ操作
+Not yet claimed:
+- ページ内容読み取り、スクリーンショット取得、ページ移動等は機能として提供されているが、このMaster更新時点では個別のlive成功Evidenceをまだ固定しない。
 
 Rule:
-- 上記のlive tool call成功を確認するまでは `CONNECTED` と記録しない。
 - ブラウザで扱う情報は、ユーザーが許可したタブとタスク範囲に限定する。
 - 閲覧履歴、認証情報、Cookie、個人情報はMasterへ保存しない。
+- 新しいセッションでは必要に応じて `VERIFY_ON_START` として再確認する。
 
 ## Claude Code → GitHub
 
@@ -193,23 +191,28 @@ Current rule:
 
 ## Google Media Remote HTTP MCP
 
-Status: `CONFIGURED / VERIFY_ON_START`
+Status: `CONFIGURED / BLOCKED / VERIFY_ON_START`（Claude Code Project-scoped evidence）
 
-Last configuration verified: 2026-09-04 JST
+Last verified: 2026-09-05 JST
 
 Verified configuration:
-- Remote HTTP MCPのCloud Run endpointが `oosaka0123-sudo/ai-agent` のcontrol-plane設定に登録済み
-- `oosaka0123-sudo/rss7-house` の `.mcp.json` に `google-media` MCPとして配布済み
+- Remote HTTP MCPのCloud Run endpointが既存Project設定に登録済み
+- `.mcp.json` の `google-media` エントリはRemote HTTP MCPとして構造的に有効
 - 認証付きRemote HTTP MCPとして利用する設計
 - Google Vertex AIの画像・動画生成基盤へ接続する構成
 
 Public endpoint:
 - `https://google-media-mcp-518404402696.us-central1.run.app/mcp`
 
+Observed blocker in Claude Code execution environment:
+- Cloud RunホストへのCONNECTがagent proxyでHTTP 403として拒否され、`/healthz` / `/readyz` まで到達できない
+- client-side認証用環境変数が未設定のため、認証済みMCP接続を開始できない
+- Claude Codeでは `google-media` MCP tool群がロードされず、画像・動画生成のlive smoke testは未実行
+
 Important distinction:
-- Repository上のendpoint / MCP設定は確認済みです。
-- このChatGPTセッションからGoogle Media MCPのツールを直接呼び出して成功したことまでは、2026-09-04時点で再確認していません。
-- そのため、現在の表記は `CONFIGURED / VERIFY_ON_START` とし、実ツール呼び出し成功後に `CONNECTED` へ更新します。
+- これはCloud Run / Vertex AI側の障害確定ではない。現在のEvidenceでは、その手前のClaude Code実行環境のegress policyとclient-side token欠如がBLOCKER。
+- Network/token解消後に同じpreflightを再実行し、health/readiness → MCP tool load → 最小画像生成 → 成功後のみ最小動画生成の順で確認する。
+- Secret / Token / Credential値はMasterへ保存しない。
 
 ## AI Development Orchestrator MCP
 
