@@ -112,14 +112,17 @@ Rule:
 
 Status: `CONNECTED / READ / WRITE`（Project-scoped evidence）
 
-Last observed: 2026-09-02 JST
+Last observed: 2026-09-06 JST
 
 Verified scope:
 - `oosaka0123-sudo/ai-agent` で実作業を確認
-- Repository内容の確認
-- 専用branchでの実装
-- commit / Pull Request作成
-- テスト結果を伴う開発フロー
+  - Repository内容の確認
+  - 専用branchでの実装
+  - commit / Pull Request作成
+  - テスト結果を伴う開発フロー
+- `oosaka0123-sudo/ai-master` で実作業を確認（2026-09-06 JST追加）
+  - clone・Repository全文読み取り
+  - 専用branch（`claude-code/mobile-first-cloud-first-adr`）でのADR追加・commit・push
 
 Rule:
 - 上記は確認できたProject・時点での実績です。
