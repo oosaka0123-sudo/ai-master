@@ -98,3 +98,14 @@
   - Secrets / Credential / IAM / Billingなどの既存Human Gateはこの方針変更によって緩和しない。
 - Reason: PC電源OFFでも継続可能な自動化を増やし、ローカル端末・ブラウザセッション・UI変更への依存を減らしつつ、トークン・運用コスト・障害点を抑えるため。
 - Execution Preference: Project側で同等の目的を達成できる場合は、GitHub Actions / API / Connector / MCP → クラウドブラウザ → ローカルブラウザの順で優先度を判断する。ただし、対象ProjectのSecurity・規約・API制約・コスト・実装難易度に応じてProject側で安全に上書き可能とする。
+
+## ADR-014: Claude API独立レビューは重要PRへ選択的に使う
+
+- Status: Accepted
+- Decision:
+  - Claude APIによる独立レビューを全Task・全PRへ常時適用せず、重要PRを中心に選択的に使う。
+  - PHP / API / JavaScript、複数ページや共通テンプレートにまたがる変更、本番公開前、クライアント納品前、原因不明の失敗ループ、Security上の独立確認が有効な変更ではレビュー価値を高く評価する。
+  - 誤字、1行程度の文言変更、軽微なCSS調整、WIP保存など低リスク変更では原則としてClaude APIレビューを要求しない。
+  - 実装担当と独立レビュー担当は固定製品名で恒久的に割り当てず、`CONNECT.md` と対象Projectで実確認できた能力に基づいて選ぶ。
+- Reason: Claude APIは従量課金であり、すべての変更へ常時組み込むとコストと待ち時間が増える。一方、本番事故につながりやすい変更や納品前では独立した第三者レビューの価値が高いため、リスクベースで利用する方が費用対効果と品質の両方を保ちやすい。
+- Operational Source: 日常の具体的な判定基準と推奨フローは `AGENTS.md` の `Claude API Independent Review Policy` を正本とする。
