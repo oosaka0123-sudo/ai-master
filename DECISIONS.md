@@ -109,3 +109,44 @@
   - 標準フローは「要件整理・指示 → 実装Agent → PR → リスクに応じて有料独立レビュー → 最終判断 → Merge」とする。
   - 特定ベンダーを恒久固定せず、現在利用可能なClaude API等を `CONNECT.md` とProject実態に基づいて選ぶ。Project側でより厳しいレビュー要件がある場合はそれを優先する。
 - Reason: 独立レビューの品質メリットを残しながら、低リスク変更への不要なAPI呼び出し、トークン消費、従量課金、待ち時間を抑え、重要な変更へレビュー予算を集中するため。
+
+## ADR-015: Mobile First / Cloud First を開発原則として正式化する
+
+- Status: Accepted（ユーザーの明示的な方針決定に基づく。`AGENTS.md` GLOBAL MUST NOT 8の
+  「根幹方針はユーザーの明示的な方針変更なしに変更しない」の例外条件を満たす）
+- Decision:
+  - 原則として、ユーザーがスマートフォンだけから
+    「指示 → AI作業 → GitHub変更 → テスト → 承認 → デプロイ」まで完結できる環境を目指す。
+  - 以下をMobile First / Cloud Firstの共通原則として扱う。
+    1. ローカルPC依存を可能な限り排除する。
+    2. GitHubを開発の中心（SSOT・作業場所）にする。
+    3. Claude Codeは可能な限りクラウド実行（Claude Code on the web等）を利用する。
+    4. Coworkはクラウド上のオーケストレーションを担当する。
+    5. MCPはRemote HTTP / cloud-compatible構成を優先する。
+    6. localhost依存のMCPは、可能ならRemote MCPへ移行する。
+    7. テスト・ビルド・デプロイはGitHub Actions等のクラウド実行基盤へ移す。
+    8. Secretは `.env` 直書きではなくGitHub Secrets / 環境変数等のクラウド側Secret管理で扱う。
+    9. PCでしか実行できない処理を発見した場合、まずクラウド化・Remote化できないか検討する。
+    10. スマートフォンから最終承認できるワークフロー（PRレビュー・承認・マージ・デプロイの
+        承認操作等）を優先する。
+  - この原則は既存のADR-013（PC電源OFF運用はGitHub Actions/API優先とする）を否定・置換せず、
+    その適用範囲を「PC電源OFF時の運用」から「開発ライフサイクル全体のスマートフォン完結」へ
+    明示的に拡張したものとして扱う。ADR-013はそのまま有効とする。
+  - この原則はDEFAULT相当（Project側で安全に上書き可能）とし、`AGENTS.md` のDEFAULT節に
+    要約と本ADRへのポインタを追記する。ハードウェア制約・規約・安全境界等、正当な理由が
+    Project側にある場合はProjectローカルルールで上書きできる。
+  - この原則は既存のHuman Gate / Automation Boundary（ADR-012、`AGENTS.md` GLOBAL MUST 14）を
+    緩和しない。スマートフォンからの「最終承認」は承認操作を行う端末の柔軟性を指すものであり、
+    force-push、Repository削除・Visibility変更、Secret/IAM/Billing変更、本番データ削除・
+    破壊的Migration等、人間の明示承認が必要な操作の対象範囲自体を変更するものではない。
+- Reason: ユーザーがPCを常時起動・携行しなくても、スマートフォンだけでAI開発の主要な
+  サイクル（指示・実装・テスト・承認・デプロイ）を完結できる状態を、個別プロジェクトごとの
+  場当たり的な対応ではなく、AI開発基盤全体の明示的な共通原則として位置づけるため。
+- Impact:
+  - 新規MCP・Connectorはlocalhost/常時稼働PC依存を避け、Remote HTTP MCPまたはクラウド
+    ホスティングを優先して設計・提案する。
+  - 既存のlocalhost依存MCP・ローカル専用スクリプトは、対象Project側で棚卸しし、
+    Remote化・クラウド化の可否を評価する（このADR自体はMasterへ進捗を記録しない。
+    棚卸し結果・実装状況は各Project Repository側で管理する）。
+  - 本ADRはMasterの共通原則を追加するものであり、Project固有の棚卸し表・進捗・
+    実装状況をMasterへコピーしない（ADR-001/ADR-005と整合）。

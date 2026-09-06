@@ -50,6 +50,19 @@
 10. 新規Projectでは規模に応じて文書を作る。最小構成はREADME.mdと必要なProjectローカルルールとし、DECISIONS.md / RUNBOOK.md / HANDOFF.md等は必要になった時点で作成する。形式だけの空ファイルを増やさない。
 11. ユーザーから「このチャット内容をリポジトリに保存して」または同等の保存指示を受けた場合、会話ログをそのまま保存しない。内容を確定仕様・重要な設計判断・再利用可能な運用手順・未完了の引き継ぎに分類し、対象Projectの既存の正本へ差分反映する。仕様はProjectの仕様書/README等、設計理由は必要時のみDECISIONS、手順は必要時のみRUNBOOK、一時状態はProject既定のHANDOFFへ保存する。Issue / PR / Actions / Commitで復元できる作業履歴はMarkdownへ重複保存しない。空ファイルを先回りで作らず、保存後は変更先と省略した情報をユーザーへ要約する。
 12. 従量課金型の外部独立レビュー（現在の例: Claude API）は、全PRへ常時自動実行せず、変更リスクとレビュー価値が高い場合に選択的に利用する。PHP / API連携 / JavaScript等の記述ミスが障害に直結する変更、複数ページにまたがる大きなテンプレート変更、クライアント納品前・本番公開前、原因不明エラーや同一問題の再発、Securityや認証周辺の重要変更では利用を優先する。単純な誤字、1行だけのテキスト変更、軽微なCSS調整、制作途中のこまめな下書き保存では原則利用しない。標準フローは「要件整理・指示 → 実装Agent → PR → リスクに応じて有料独立レビュー → 最終判断 → Merge」とし、Project側でより厳しいレビュー要件を定義している場合はそれを優先する。AnthropicのClaude API / Claude Code Actionを従量課金で利用する場合、第一選択モデルは明示的に `sonnet` とする。モデル未指定でSDK/CLI既定値へ委ねない。Opusはユーザーが明示指定した場合、またはProject側で必要性を説明しHuman Approvalを得た場合だけ使用する。
+13. **Mobile First / Cloud First**（ADR-015）: 原則として、ユーザーがスマートフォンだけから
+    「指示 → AI作業 → GitHub変更 → テスト → 承認 → デプロイ」まで完結できる環境を目指す。
+    ローカルPC依存を可能な限り排除し、GitHubを開発の中心に置き、Claude Codeは可能な限り
+    クラウド実行を利用し、Coworkはクラウド上のオーケストレーションを担当する。MCPは
+    Remote HTTP / cloud-compatible構成を優先し、localhost依存のMCPは可能ならRemote MCPへ
+    移行する。テスト・ビルド・デプロイはGitHub Actions等のクラウド実行基盤へ移し、Secretは
+    GitHub Secrets / 環境変数等のクラウド側Secret管理で扱う。PCでしか実行できない処理を
+    発見した場合、まずクラウド化できないか検討する。スマートフォンから最終承認できる
+    ワークフローを優先する。ただし、force-push・Repository削除/Visibility変更・
+    Secret/IAM/Billing変更・本番データ削除等、既存のHuman Gate（本ファイルGLOBAL MUST 14、
+    ADR-012）が要求する人間承認そのものは緩和しない。ハードウェア制約・規約・安全境界等の
+    正当な理由がある場合はProjectローカルルールで上書きできる。詳細は `DECISIONS.md`
+    ADR-015、既存のADR-013（PC電源OFF運用）を参照。
 
 ## Context Handoff Protocol — 40% Rule
 

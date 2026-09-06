@@ -210,7 +210,7 @@ Current rule:
 
 Status: `CONFIGURED / BLOCKED / VERIFY_ON_START`（Claude Code Project-scoped evidence）
 
-Last verified: 2026-09-05 JST
+Last verified: 2026-09-06 JST（前回2026-09-05の記録と同じBLOCKERを別セッションで再確認）
 
 Verified configuration:
 - Remote HTTP MCPのCloud Run endpointが既存Project設定に登録済み
@@ -223,6 +223,10 @@ Public endpoint:
 
 Observed blocker in Claude Code execution environment:
 - Cloud RunホストへのCONNECTがagent proxyでHTTP 403として拒否され、`/healthz` / `/readyz` まで到達できない
+  （2026-09-06 JST、`ai-master` Project作業中のClaude Code cloudセッションで
+  `curl https://google-media-mcp-518404402696.us-central1.run.app/healthz` を実行し再確認。
+  proxyステータスは `connect_rejected` / `gateway answered 403 to CONNECT (policy denial or
+  upstream failure)`。2026-09-05の記録と同一のBLOCKERであることを別セッションで再確認した）
 - client-side認証用環境変数が未設定のため、認証済みMCP接続を開始できない
 - Claude Codeでは `google-media` MCP tool群がロードされず、画像・動画生成のlive smoke testは未実行
 
