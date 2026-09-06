@@ -50,6 +50,38 @@
 10. 新規Projectでは規模に応じて文書を作る。最小構成はREADME.mdと必要なProjectローカルルールとし、DECISIONS.md / RUNBOOK.md / HANDOFF.md等は必要になった時点で作成する。形式だけの空ファイルを増やさない。
 11. ユーザーから「このチャット内容をリポジトリに保存して」または同等の保存指示を受けた場合、会話ログをそのまま保存しない。内容を確定仕様・重要な設計判断・再利用可能な運用手順・未完了の引き継ぎに分類し、対象Projectの既存の正本へ差分反映する。仕様はProjectの仕様書/README等、設計理由は必要時のみDECISIONS、手順は必要時のみRUNBOOK、一時状態はProject既定のHANDOFFへ保存する。Issue / PR / Actions / Commitで復元できる作業履歴はMarkdownへ重複保存しない。空ファイルを先回りで作らず、保存後は変更先と省略した情報をユーザーへ要約する。
 
+## Claude API Independent Review Policy
+
+Claude APIによる独立レビューは、すべての変更へ常時組み込まず、**重要PRを中心に任意で呼び出す**。
+
+### やる価値が高いケース
+
+- PHP / API連携 / JavaScriptなど、記述ミスや回帰が本番エラーに直結しやすい変更。
+- 複数ページ・共通テンプレート・認証・データフロー等にまたがる大きな変更。
+- クライアント納品前、本番公開前、重要なDeploy前の最終チェック。
+- 同一原因・同一手段で失敗が続き、通常レビューだけでは原因を切り分けにくい場合。
+- Security、秘密情報の扱い、破壊的変更の可能性など、独立した第三者視点が有効な場合。
+
+### 原則として不要なケース
+
+- 単純な誤字修正、1行程度のテキスト変更。
+- 軽微なCSS調整や表示上の微修正で、影響範囲が明確なもの。
+- 制作途中のこまめな下書き保存やWIP Commit。
+- 通常の実装・テスト・PRレビューだけで十分に検証できる低リスク変更。
+
+### コストと実行ルール
+
+- Claude APIは従量課金であるため、通常開発の全Task・全PRへ自動常時実行しない。
+- API Reviewを使う場合は、対象PR・Issue・変更範囲を絞り、必要以上にRepository全体を毎回読み直させない。
+- Project側でより厳しいレビュー要件がある場合は、そのProjectのローカルルールを優先する。
+- API Secret / Tokenの登録、課金上限・Billing変更は `GLOBAL MUST` のHuman Gateに従う。
+
+### 推奨フロー
+
+`GPT等で要件整理・指示 → 実装担当Agent（例: Claude Code）で制作 → Test → PR → 重要PRのみClaude API独立レビュー → 最終判断 → Merge`
+
+製品名への役割固定は行わず、実装担当・レビュー担当は `CONNECT.md` と対象Projectで実確認できる能力に基づいて選択する。
+
 ## Context Handoff Protocol — 40% Rule
 
 このルールは ChatGPT / Claude / Gemini / Jules / Codex / Copilot、および本Masterを参照して作業するその他のLLM・AIエージェントすべてに適用します。
