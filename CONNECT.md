@@ -112,14 +112,17 @@ Rule:
 
 Status: `CONNECTED / READ / WRITE`（Project-scoped evidence）
 
-Last observed: 2026-09-02 JST
+Last observed: 2026-09-06 JST
 
 Verified scope:
 - `oosaka0123-sudo/ai-agent` で実作業を確認
-- Repository内容の確認
-- 専用branchでの実装
-- commit / Pull Request作成
-- テスト結果を伴う開発フロー
+  - Repository内容の確認
+  - 専用branchでの実装
+  - commit / Pull Request作成
+  - テスト結果を伴う開発フロー
+- `oosaka0123-sudo/ai-master` で実作業を確認（2026-09-06 JST追加）
+  - clone・Repository全文読み取り
+  - 専用branch（`claude-code/mobile-first-cloud-first-adr`）でのADR追加・commit・push
 
 Rule:
 - 上記は確認できたProject・時点での実績です。
@@ -210,7 +213,7 @@ Current rule:
 
 Status: `CONFIGURED / BLOCKED / VERIFY_ON_START`（Claude Code Project-scoped evidence）
 
-Last verified: 2026-09-05 JST
+Last verified: 2026-09-06 JST（前回2026-09-05の記録と同じBLOCKERを別セッションで再確認）
 
 Verified configuration:
 - Remote HTTP MCPのCloud Run endpointが既存Project設定に登録済み
@@ -223,6 +226,10 @@ Public endpoint:
 
 Observed blocker in Claude Code execution environment:
 - Cloud RunホストへのCONNECTがagent proxyでHTTP 403として拒否され、`/healthz` / `/readyz` まで到達できない
+  （2026-09-06 JST、`ai-master` Project作業中のClaude Code cloudセッションで
+  `curl https://google-media-mcp-518404402696.us-central1.run.app/healthz` を実行し再確認。
+  proxyステータスは `connect_rejected` / `gateway answered 403 to CONNECT (policy denial or
+  upstream failure)`。2026-09-05の記録と同一のBLOCKERであることを別セッションで再確認した）
 - client-side認証用環境変数が未設定のため、認証済みMCP接続を開始できない
 - Claude Codeでは `google-media` MCP tool群がロードされず、画像・動画生成のlive smoke testは未実行
 
