@@ -1,6 +1,6 @@
 # CONNECT.md — AI MASTER Connection Registry
 
-Last verified: 2026-09-05 JST
+Last verified: 2026-09-06 JST
 
 このファイルは **接続状態と実確認できた能力だけ** を管理します。
 
@@ -124,6 +124,27 @@ Verified scope:
 Rule:
 - 上記は確認できたProject・時点での実績です。
 - 新しいClaude Code sessionや別Projectでは `VERIFY_ON_START` として対象Repositoryへの実アクセスを確認します。
+
+## Claude API → GitHub Actions
+
+Type: API / CI integration
+
+Status: `CONNECTED`（Project-scoped evidence）
+
+Last observed: 2026-09-06 JST
+
+Verified scope:
+- `oosaka0123-sudo/rss7-ai-works` のGitHub ActionsからClaude独立レビューWorkflowを実行。
+- Anthropic認証availability checkの成功を確認。
+- Claude review stepが実行開始したことを確認。
+
+Limitations:
+- この接続確認は上記Project・時点に限定する。
+- 他Repositoryで同じAPI連携が利用可能とは自動的に扱わず、Projectごとに `VERIFY_ON_START` とする。
+- Secret / Token / Credential値やSecret名はMasterへ保存しない。
+
+Operational note:
+- Claude APIは従量課金のため、重要PR・本番前・原因不明の失敗ループ等へ選択的に使う。通常の低リスク変更には常時実行しない。
 
 ## Google Jules → GitHub
 
