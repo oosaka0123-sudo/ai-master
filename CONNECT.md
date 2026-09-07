@@ -233,6 +233,28 @@ Current interpretation:
 - New Claude Code sessions/projects must still be treated as `VERIFY_ON_START` because their network policy, environment variables, and MCP loading are session/project scoped.
 - Secret / Token / Credential values are never stored in Master.
 
+## Steel Browser Remote HTTP MCP
+
+Status: `CONNECTED / READ / WRITE / VERIFY_ON_START`（production + Project-scoped evidence）
+
+Last verified: 2026-09-08 JST
+
+Verified configuration and live evidence:
+- Remote HTTP MCP endpoint is live on production Cloud Run in `rss7-ai-media / us-central1`.
+- `/readyz` returned HTTP 200 with `{"ready":true}`.
+- Authenticated MCP connection and tool discovery succeeded against production.
+- Verified tool set: `create_session`, `navigate`, `extract`, `screenshot`, `release_session`.
+- End-to-end browser lifecycle succeeded against `https://example.com/`.
+- `extract` returned non-empty text content and `screenshot` returned a valid PNG payload.
+- GitHub Actions can keylessly authenticate to Google Cloud, deploy the service, verify readiness, and run the real five-step acceptance lifecycle without a local PC or Cloud Shell.
+- Current production acceptance result: `ALL_PASS`.
+
+Current interpretation:
+- Steel Browser Remote HTTP MCP is production-ready for the verified five-tool lifecycle.
+- Deployment and acceptance follow the cloud-first automation policy and do not require a long-lived Google Cloud credential in GitHub.
+- New AI sessions/projects remain `VERIFY_ON_START` because MCP loading, network policy, and environment configuration are session/project scoped.
+- Secret / Token / Credential values and secret resource names are never stored in Master.
+
 ## AI Development Orchestrator MCP
 
 Status: `VERIFY_ON_START`
