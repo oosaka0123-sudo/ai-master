@@ -1,6 +1,6 @@
 # CONNECT.md — AI MASTER Connection Registry
 
-Last verified: 2026-09-06 JST
+Last verified: 2026-09-08 JST
 
 このファイルは **接続状態と実確認できた能力だけ** を管理します。
 
@@ -211,32 +211,27 @@ Current rule:
 
 ## Google Media Remote HTTP MCP
 
-Status: `CONFIGURED / BLOCKED / VERIFY_ON_START`（Claude Code Project-scoped evidence）
+Status: `CONNECTED / READ / WRITE / VERIFY_ON_START`（production + Project-scoped evidence）
 
-Last verified: 2026-09-06 JST（前回2026-09-05の記録と同じBLOCKERを別セッションで再確認）
+Last verified: 2026-09-08 JST
 
-Verified configuration:
-- Remote HTTP MCPのCloud Run endpointが既存Project設定に登録済み
-- `.mcp.json` の `google-media` エントリはRemote HTTP MCPとして構造的に有効
-- 認証付きRemote HTTP MCPとして利用する設計
-- Google Vertex AIの画像・動画生成基盤へ接続する構成
+Verified configuration and live evidence:
+- Remote HTTP MCP endpoint: `https://google-media-mcp-518404402696.us-central1.run.app/mcp`
+- Production Cloud Run revision `google-media-mcp-00008-f7r` is Ready / ContainerHealthy and serving 100% traffic.
+- `/readyz` returned HTTP 200 with `{"ready":true}`.
+- Authenticated MCP `initialize` and tool discovery succeeded against production.
+- Verified tool set: `generate_image`, `generate_video`, `start_video_generation`, `check_video_generation`.
+- `generate_image` succeeded with `gemini-2.5-flash-image` and persisted its output to the shared GCS bucket.
+- The generated image GCS URI was used as the actual input to `start_video_generation`.
+- Async Veo flow completed via `check_video_generation` (`processing` -> `processing` -> `success`) using `veo-3.1-fast-generate-001`.
+- Final image and video objects were independently verified to exist in GCS.
+- The async image-to-video acceptance completed in about 50 seconds and avoided the prior client-side ~60 second timeout failure mode.
 
-Public endpoint:
-- `https://google-media-mcp-518404402696.us-central1.run.app/mcp`
-
-Observed blocker in Claude Code execution environment:
-- Cloud RunホストへのCONNECTがagent proxyでHTTP 403として拒否され、`/healthz` / `/readyz` まで到達できない
-  （2026-09-06 JST、`ai-master` Project作業中のClaude Code cloudセッションで
-  `curl https://google-media-mcp-518404402696.us-central1.run.app/healthz` を実行し再確認。
-  proxyステータスは `connect_rejected` / `gateway answered 403 to CONNECT (policy denial or
-  upstream failure)`。2026-09-05の記録と同一のBLOCKERであることを別セッションで再確認した）
-- client-side認証用環境変数が未設定のため、認証済みMCP接続を開始できない
-- Claude Codeでは `google-media` MCP tool群がロードされず、画像・動画生成のlive smoke testは未実行
-
-Important distinction:
-- これはCloud Run / Vertex AI側の障害確定ではない。現在のEvidenceでは、その手前のClaude Code実行環境のegress policyとclient-side token欠如がBLOCKER。
-- Network/token解消後に同じpreflightを再実行し、health/readiness → MCP tool load → 最小画像生成 → 成功後のみ最小動画生成の順で確認する。
-- Secret / Token / Credential値はMasterへ保存しない。
+Current interpretation:
+- The previous Claude Code cloud egress/token blocker recorded on 2026-09-06 is no longer the current production state.
+- Production Google Media MCP is live and has passed end-to-end image -> real image-to-video -> GCS persistence acceptance.
+- New Claude Code sessions/projects must still be treated as `VERIFY_ON_START` because their network policy, environment variables, and MCP loading are session/project scoped.
+- Secret / Token / Credential values are never stored in Master.
 
 ## AI Development Orchestrator MCP
 
