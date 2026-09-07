@@ -240,7 +240,7 @@ Status: `CONNECTED / READ / WRITE / VERIFY_ON_START`（production + Project-scop
 Last verified: 2026-09-08 JST
 
 Verified configuration and live evidence:
-- Remote HTTP MCP endpoint is live on production Cloud Run in `rss7-ai-media / us-central1`.
+- Remote HTTP MCP canonical endpoint: `https://steel-browser-mcp-518404402696.us-central1.run.app/mcp/` (`rss7-ai-media / us-central1`).
 - `/readyz` returned HTTP 200 with `{"ready":true}`.
 - Authenticated MCP connection and tool discovery succeeded against production.
 - Verified tool set: `create_session`, `navigate`, `extract`, `screenshot`, `release_session`.
