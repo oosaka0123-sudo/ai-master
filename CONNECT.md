@@ -108,6 +108,25 @@ Rule:
 - 閲覧履歴、認証情報、Cookie、個人情報はMasterへ保存しない。
 - 新しいセッションでは必要に応じて `VERIFY_ON_START` として再確認する。
 
+## ChatGPT → Remote Desktop Commander → Google Cloud CLI
+
+Type: Remote computer bridge / local CLI execution path
+
+Status: `CONNECTED / READ / WRITE / VERIFY_ON_START`（device-scoped evidence）
+
+Verified: 2026-09-08 JST
+
+Verified scope / capabilities:
+- ChatGPTからRemote Desktop Commander経由で、ユーザーが許可したWindows端末上のterminal command実行に成功
+- 同端末でGoogle Cloud SDK / `gcloud` CLIの実行を確認
+- `gcloud` からactive Google Cloud projectが `rss7-ai-media` であることを非秘密情報として確認
+- 認証済みGoogle accountがactiveであることを確認したが、account identifierやcredential/token自体はMasterへ保存しない
+
+Current interpretation:
+- PC依存処理が必要な場合の実行ブリッジとして利用可能。ただしGLOBAL方針ではCloud Firstを優先し、GitHub Actions / Remote HTTP MCP等へ移せる処理はクラウド側を優先する。
+- 新しいdevice/sessionでは接続、端末権限、`gcloud` authentication/configurationを `VERIFY_ON_START` として再確認する。
+- Secret / Token / Credential / local user path等はMasterへ記録しない。
+
 ## Claude Code → GitHub
 
 Status: `CONNECTED / READ / WRITE`（Project-scoped evidence）
