@@ -1,6 +1,6 @@
 # CONNECT.md — AI MASTER Connection Registry
 
-Last verified: 2026-09-08 JST
+Last verified: 2026-09-09 JST
 
 このファイルは **接続状態と実確認できた能力だけ** を管理します。
 
@@ -245,6 +245,7 @@ Verified configuration and live evidence:
 - Async Veo flow completed via `check_video_generation` (`processing` -> `processing` -> `success`) using `veo-3.1-fast-generate-001`.
 - Final image and video objects were independently verified to exist in GCS.
 - The async image-to-video acceptance completed in about 50 seconds and avoided the prior client-side ~60 second timeout failure mode.
+- Claude Code on the authorized Windows development device loaded the Project-scoped `google-media` entry and reported `Connected` after Secret Manager-backed environment injection; no secret value was persisted in this repository.
 
 Current interpretation:
 - The previous Claude Code cloud egress/token blocker recorded on 2026-09-06 is no longer the current production state.
@@ -256,7 +257,7 @@ Current interpretation:
 
 Status: `CONNECTED / READ / WRITE / VERIFY_ON_START`（production + Project-scoped evidence）
 
-Last verified: 2026-09-08 JST
+Last verified: 2026-09-09 JST
 
 Verified configuration and live evidence:
 - Remote HTTP MCP canonical endpoint: `https://steel-browser-mcp-518404402696.us-central1.run.app/mcp/` (`rss7-ai-media / us-central1`).
@@ -265,6 +266,8 @@ Verified configuration and live evidence:
 - Verified tool set: `create_session`, `navigate`, `extract`, `screenshot`, `release_session`.
 - End-to-end browser lifecycle succeeded against `https://example.com/`.
 - `extract` returned non-empty text content and `screenshot` returned a valid PNG payload.
+- Claude Code on the authorized Windows development device loaded the Project-scoped `steel-browser` entry and reported `Connected` after Secret Manager-backed environment injection.
+- A Claude Code `sonnet` smoke test called `create_session`, `navigate`, `extract`, and `release_session` through the MCP and returned the verified page title `Example Domain`.
 - GitHub Actions can keylessly authenticate to Google Cloud, deploy the service, verify readiness, and run the real five-step acceptance lifecycle without a local PC or Cloud Shell.
 - Current production acceptance result: `ALL_PASS`.
 
