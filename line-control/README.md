@@ -16,7 +16,7 @@ GitHubを正本のまま、LINEから複数Projectの状態確認・再開操作
 - 各Repositoryに `▶ 進めて` / `↻ 再開` / `🔧 再実行` ボタン
 - 一括操作: `黄色を全部進める` / `赤を全部再実行`
 - 停止・CI失敗・Human Gateを定期監視し、条件成立直後だけLINE Push通知
-- `continue` / `resume` は中央 `ai-development-orchestrator` へ `repository_dispatch(event_type=line-control)` を送り、GitHub Actions耐久キュー経由でClaude実装を開始
+- `continue` / `resume` は中央 `rss7-ai-control-runner` Cloud Run Jobを起動し、Claude実装を別実行として開始
 - `retry_failed` は対象Project自身の最新失敗Workflowについてfailed jobsだけ再実行
 - LINE webhook署名検証 + 許可ユーザーID allowlist
 
@@ -26,7 +26,7 @@ GitHubを正本のまま、LINEから複数Projectの状態確認・再開操作
 
 公開Web画面から操作する方式はMVPでは採用しません。制御命令はLINE Platformが署名したWebhook経由だけで受け付け、さらに `LINE_ALLOWED_USER_IDS` に一致するユーザーだけを許可します。
 
-長時間のClaude実装をLINE webhook内で待たせません。LINEは中央Orchestrator Repositoryへ命令をキュー投入した時点ですぐ返信し、実装はGitHub Actions側で継続します。
+長時間のClaude実装をLINE webhook内で待たせません。LINEはCloud Run Jobを起動した時点ですぐ返信し、実装は独立したJob executionで継続します。
 
 ## 必要な環境変数
 
@@ -34,7 +34,9 @@ GitHubを正本のまま、LINEから複数Projectの状態確認・再開操作
 CONTROL_GITHUB_TOKEN=...
 GITHUB_API_MODE=user
 GITHUB_OWNER=oosaka0123-sudo
-ORCHESTRATOR_REPOSITORY=oosaka0123-sudo/ai-development-orchestrator
+CONTROL_JOB_PROJECT=rss7-ai-orchestrator
+CONTROL_JOB_REGION=asia-northeast1
+CONTROL_JOB_NAME=rss7-ai-control-runner
 STALLED_MINUTES=45
 MONITOR_INTERVAL_MINUTES=15
 PORT=8787
@@ -47,7 +49,7 @@ LINE_ALLOWED_USER_IDS=Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 ### CONTROL_GITHUB_TOKEN
 
-推奨は専用GitHub Appまたは必要最小権限のfine-grained tokenです。Repository一覧/metadata/Issues/PR/Actionsの読み取り、中央Orchestrator Repositoryへのrepository dispatch、対象Projectの失敗Actions再実行に必要な権限を持たせます。
+推奨は専用GitHub Appまたは必要最小権限のfine-grained tokenです。Repository一覧/metadata/Issues/PR/Actionsの読み取りと、対象Projectの失敗Actions再実行に必要な権限を持たせます。再開Jobの起動はGoogle Cloudのサービスアカウント権限で行います。
 
 SecretはRepositoryファイル、Issue、PR本文へ書かず、デプロイ先のSecret/Environment Variablesへ保存してください。
 
@@ -86,27 +88,21 @@ Secret/IAM変更はHuman Gateです。このRepositoryでは秘密値そのも�
 
 ## 一括操作の安全境界
 
-- `黄色を全部進める`: 停滞判定されたRepositoryだけを中央Orchestratorキューへ投入
+- `黄色を全部進める`: 停滞判定されたRepositoryだけを中央Cloud Run Jobへ投入
 - `赤を全部再実行`: CI失敗判定されたRepositoryだけでfailed jobsを再実行
 - 🔵 Human Gateは一括自動処理しない
 - 🟢 正常Projectは一括操作対象にしない
 - Repository削除、Visibility変更、Secret/IAM/Billing変更、force-push等の破壊的操作は実装しない
 
-## 中央Orchestratorによる再開
+## 中央Cloud Run Jobによる再開
 
-`continue` / `resume` は各Project自身へdispatchしません。既定では `oosaka0123-sudo/ai-development-orchestrator` へ次の形で送ります。
+`continue` / `resume` は対象Project自身へdispatchせず、`rss7-ai-orchestrator` Projectの `rss7-ai-control-runner` Jobを実行します。
 
-```text
-repository_dispatch event_type: line-control
-client_payload.repository: <target owner/repo>
-client_payload.command: continue | resume
-```
+Job起動時に `CONTROL_REPOSITORY=<target owner/repo>` と `CONTROL_COMMAND=continue|resume` だけをoverrideし、GitHub tokenとAnthropic API keyはJob側のSecret Manager参照を使用します。LINE側へ秘密値を渡しません。
 
-中央OrchestratorはGitHub Actionsを耐久キューとして使い、対象Repositoryのcurrent default branch、Projectルール、Open Issues、Open PRs、最新Actions、現在コードを確認したうえで、明確で安全な未完了作業だけをClaude Agentへ再委任します。結果は新規branch + Pull Requestまでで停止し、自動merge・本番deployは行いません。
+中央Jobは対象Repositoryのcurrent default branch、Projectルール、Open Issues、Open PRs、最新Actions、現在コードを確認し、明確で安全な未完了作業だけをClaude Agentへ再委任します。結果は新規branch + Pull Requestまでで停止し、自動merge・本番deployは行いません。
 
-この方式では対象Project側に `repository_dispatch` listenerを配布する必要がありません。そのため、新しいRepositoryが増えても中央OrchestratorのGitHub credentialがアクセスできる範囲なら、個別セットアップなしで「進めて」「再開」の対象にできます。
-
-中央Orchestrator側のActions実行には、同RepositoryのActions Secretsとして `ORCHESTRATOR_GITHUB_TOKEN` と `ANTHROPIC_API_KEY` が必要です。値はコードに保存しません。
+対象Project側のlistenerは不要です。新しいRepositoryも中央JobのGitHub credentialがアクセスできれば、個別セットアップなしで「進めて」「再開」の対象になります。LINE管制塔のサービスアカウントにはJob単位で `roles/run.jobsExecutorWithOverrides` のみ付与します。
 
 ## 信号判定の誤検知対策
 
