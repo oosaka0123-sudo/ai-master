@@ -2,6 +2,7 @@ process.env.NODE_ENV = 'test';
 
 const { getAllStatuses } = await import('./server.mjs');
 const { selectAlerts, buildAlertText, pushText } = await import('./monitor.mjs');
+const { getRecentRunnerFailures, buildRunnerFailureText } = await import('./runnerHealth.mjs');
 
 const channelId = process.env.LINE_CHANNEL_ID || '';
 const channelSecret = process.env.LINE_CHANNEL_SECRET || '';
@@ -15,10 +16,23 @@ if (!channelId || !channelSecret || !userIds.length) {
 
 const data = await getAllStatuses();
 const alerts = selectAlerts(data, { stalledMinutes, intervalMinutes });
+const runnerFailures = await getRecentRunnerFailures({ windowMinutes: intervalMinutes }).catch(error => {
+  console.error(`runner health check failed: ${error.message}`);
+  return [];
+});
 
 if (alerts.length) {
   const text = buildAlertText(alerts);
   for (const userId of userIds) await pushText(channelId, channelSecret, userId, text);
 }
+if (runnerFailures.length) {
+  const text = buildRunnerFailureText(runnerFailures);
+  for (const userId of userIds) await pushText(channelId, channelSecret, userId, text);
+}
 
-console.log(JSON.stringify({ ok: true, repositories: data.repositories?.length || 0, alerts: alerts.length }));
+console.log(JSON.stringify({
+  ok: true,
+  repositories: data.repositories?.length || 0,
+  alerts: alerts.length,
+  runnerFailures: runnerFailures.length
+}));

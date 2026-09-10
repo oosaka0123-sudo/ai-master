@@ -1,6 +1,6 @@
 import http from 'node:http';
 import crypto from 'node:crypto';
-import { buildDashboardMessages, isDashboardRequest } from './flex.mjs';
+import { buildDashboardMessages, excludeDashboardRepositories, isDashboardRequest } from './flex.mjs';
 import { runControlJob, DEFAULT_CONTROL_PROJECT, DEFAULT_CONTROL_REGION, DEFAULT_CONTROL_JOB } from './commands.mjs';
 import { issueLineAccessToken } from './lineToken.mjs';
 
@@ -94,6 +94,7 @@ export function classifyProject({ repo, latestCommit, latestRun, openIssues, ope
   if (humanWait || actionRequired) return { signal: 'blue', reason: actionRequired ? 'action_required' : 'human_wait', lastActivity, ageMinutes, hasOpenWork };
   if (latestRun && BAD_CONCLUSIONS.has(latestRun.conclusion)) return { signal: 'red', reason: 'ci_failed', lastActivity, ageMinutes, hasOpenWork };
   if (hasOpenWork && ageMinutes !== null && ageMinutes >= thresholdMinutes) return { signal: 'yellow', reason: 'stalled', lastActivity, ageMinutes, hasOpenWork };
+  if (!hasOpenWork && latestRun?.conclusion === 'success') return { signal: 'done', reason: 'completed', lastActivity, ageMinutes, hasOpenWork };
   return { signal: 'green', reason: 'normal', lastActivity, ageMinutes, hasOpenWork };
 }
 
@@ -134,7 +135,7 @@ export async function getAllStatuses() {
       error: error.message
     })))));
   }
-  const order = { red: 0, blue: 1, yellow: 2, green: 3 };
+  const order = { red: 0, blue: 1, yellow: 2, green: 3, done: 4 };
   results.sort((a, b) => (order[a.signal] ?? 9) - (order[b.signal] ?? 9) || a.name.localeCompare(b.name));
   return {
     generatedAt: new Date().toISOString(),
@@ -240,10 +241,12 @@ async function handleLineWebhook(raw) {
         await replyLine(event.replyToken, [{ type: 'text', text: `✅ 一括処理: 対象${result.total} / 成功${result.succeeded} / 失敗${result.failed}\n「管制盤」と送ると最新状態を表示します。` }]);
       } else {
         const result = await executeCommand({ repository, command });
-        const text = result.ok
-          ? `✅ ${repository}: ${command} を中央ジョブへ投入しました\nClaude実装をCloud Run Jobで開始します。`
-          : `⚠️ ${repository}: ${result.message}`;
-        await replyLine(event.replyToken, [{ type: 'text', text }]);
+        if (result.ok) {
+          const latest = excludeDashboardRepositories(await getAllStatuses(), [repository]);
+          await replyLine(event.replyToken, buildDashboardMessages(latest));
+        } else {
+          await replyLine(event.replyToken, [{ type: 'text', text: `⚠️ ${repository}: ${result.message}` }]);
+        }
       }
     } catch (error) {
       await replyLine(event.replyToken, [{ type: 'text', text: `❌ ${repository || '一括処理'}: ${error.message}` }]);

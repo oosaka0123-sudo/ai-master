@@ -1,5 +1,5 @@
-const ICONS = { green: '🟢', yellow: '🟡', red: '🔴', blue: '🔵' };
-const LABELS = { green: '正常', yellow: '停滞', red: '停止/失敗', blue: 'あなた待ち' };
+const ICONS = { green: '🟢', yellow: '🟡', red: '🔴', blue: '🔵', done: '✅' };
+const LABELS = { green: '正常', yellow: '停滞', red: '停止/失敗', blue: 'あなた待ち', done: '完成' };
 
 function postback(label, repository, command, style = 'secondary') {
   const payload = { command };
@@ -9,7 +9,7 @@ function postback(label, repository, command, style = 'secondary') {
     type: 'button',
     style,
     height: 'sm',
-    action: { type: 'postback', label, data, displayText: label }
+    action: { type: 'postback', label, data }
   };
 }
 
@@ -24,8 +24,9 @@ function summaryBubble(data) {
       spacing: 'md',
       contents: [
         { type: 'text', text: `${overall} AI PROJECT CONTROL`, weight: 'bold', size: 'lg' },
-        { type: 'text', text: `🟢 ${counts.green || 0}  🟡 ${counts.yellow || 0}  🔴 ${counts.red || 0}  🔵 ${counts.blue || 0}`, wrap: true },
-        { type: 'text', text: `全 ${data.repositories.length} repositories`, size: 'sm', color: '#888888' }
+        { type: 'text', text: `🟢 ${counts.green || 0}  🟡 ${counts.yellow || 0}  🔴 ${counts.red || 0}  🔵 ${counts.blue || 0}  ✅ ${counts.done || 0}`, wrap: true },
+        { type: 'text', text: `全 ${data.repositories.length} repositories`, size: 'sm', color: '#888888' },
+        { type: 'text', text: '自動15分 / 手動更新はいつでもOK', size: 'xs', color: '#888888' }
       ]
     },
     footer: {
@@ -35,7 +36,7 @@ function summaryBubble(data) {
       contents: [
         postback('▶ 黄色を全部進める', null, 'continue_stalled', 'primary'),
         postback('🔧 赤を全部再実行', null, 'retry_failed_all'),
-        postback('🔄 最新状態に更新', null, 'dashboard')
+        postback('🔄 今すぐ更新', null, 'dashboard')
       ]
     }
   };
@@ -56,17 +57,24 @@ function projectBubble(project) {
         { type: 'text', text: `最終活動 ${age}  PR ${project.openPrs ?? '-'}  Issue ${project.openIssues ?? '-'}`, size: 'xs', color: '#888888', wrap: true }
       ]
     },
-    footer: {
-      type: 'box',
-      layout: 'vertical',
-      spacing: 'sm',
-      contents: [
+    ...(project.signal === 'done' ? {} : { footer: {
+      type: 'box', layout: 'vertical', spacing: 'sm', contents: [
         postback('▶ 進めて', project.fullName, 'continue', 'primary'),
         postback('↻ 再開', project.fullName, 'resume'),
         postback('🔧 再実行', project.fullName, 'retry_failed')
       ]
-    }
+    }})
   };
+}
+
+export function excludeDashboardRepositories(data, fullNames = []) {
+  const excluded = new Set(fullNames.filter(Boolean));
+  const repositories = (data.repositories || []).filter(item => !excluded.has(item.fullName));
+  const counts = repositories.reduce((acc, item) => {
+    acc[item.signal] = (acc[item.signal] || 0) + 1;
+    return acc;
+  }, {});
+  return { ...data, repositories, counts };
 }
 
 export function buildDashboardMessages(data) {
