@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 import { buildDashboardMessages, excludeDashboardRepositories, isDashboardRequest } from './flex.mjs';
 import { runControlJob, DEFAULT_CONTROL_PROJECT, DEFAULT_CONTROL_REGION, DEFAULT_CONTROL_JOB } from './commands.mjs';
 import { issueLineAccessToken } from './lineToken.mjs';
-import { resolveProjectOpenUrl } from './projectLinks.mjs';
+import { resolveProjectOpenLink } from './projectLinks.mjs';
 
 const port = Number(process.env.PORT || 8787);
 const githubToken = process.env.CONTROL_GITHUB_TOKEN || process.env.GITHUB_TOKEN || '';
@@ -110,6 +110,7 @@ export async function getRepoStatus(repo) {
   const pureIssues = issues.filter(i => !i.pull_request);
   const latestCommit = commits[0] || null;
   const latestRun = runs.workflow_runs?.[0] || null;
+  const openLink = resolveProjectOpenLink(fullName);
   return {
     name: repo.name,
     fullName,
@@ -118,7 +119,8 @@ export async function getRepoStatus(repo) {
     openIssues: pureIssues.length,
     openPrs: pulls.length,
     latestRun: latestRun ? { id: latestRun.id, status: latestRun.status, conclusion: latestRun.conclusion, updatedAt: latestRun.updated_at } : null,
-    openUrl: resolveProjectOpenUrl(fullName),
+    openUrl: openLink?.url || null,
+    openType: openLink?.type || null,
     ...classifyProject({ repo, latestCommit, latestRun, openIssues: pureIssues, openPrs: pulls })
   };
 }
@@ -134,7 +136,8 @@ export async function getAllStatuses() {
       private: Boolean(repo.private),
       signal: 'red',
       reason: 'status_error',
-      openUrl: resolveProjectOpenUrl(repo.full_name),
+      openUrl: resolveProjectOpenLink(repo.full_name)?.url || null,
+      openType: resolveProjectOpenLink(repo.full_name)?.type || null,
       error: error.message
     })))));
   }

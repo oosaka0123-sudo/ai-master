@@ -13,10 +13,12 @@ function postback(label, repository, command, style = 'secondary') {
   };
 }
 
-function openButton(url) {
+function openButton(url, type) {
+  if (!url) return null;
+  const label = type === 'work' ? '🧰 Workを開く' : '💬 Chatを開く';
   return {
     type: 'button', style: 'secondary', height: 'sm',
-    action: { type: 'uri', label: '🔗 開く', uri: url }
+    action: { type: 'uri', label, uri: url }
   };
 }
 
@@ -64,16 +66,16 @@ function projectBubble(project) {
         { type: 'text', text: `最終活動 ${age}  PR ${project.openPrs ?? '-'}  Issue ${project.openIssues ?? '-'}`, size: 'xs', color: '#888888', wrap: true }
       ]
     },
-    footer: {
-      type: 'box', layout: 'vertical', spacing: 'sm', contents: project.signal === 'done'
-        ? [openButton(project.openUrl)]
-        : [
-            openButton(project.openUrl),
+    ...(project.signal === 'done'
+      ? (project.openUrl ? { footer: { type: 'box', layout: 'vertical', spacing: 'sm', contents: [openButton(project.openUrl, project.openType)] } } : {})
+      : { footer: {
+          type: 'box', layout: 'vertical', spacing: 'sm', contents: [
+            ...(project.openUrl ? [openButton(project.openUrl, project.openType)] : []),
             postback('▶ 進めて', project.fullName, 'continue', 'primary'),
             postback('↻ 再開', project.fullName, 'resume'),
             postback('🔧 再実行', project.fullName, 'retry_failed')
           ]
-    }
+        } })
   };
 }
 
