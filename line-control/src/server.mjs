@@ -13,10 +13,14 @@ const ownerFilter = process.env.GITHUB_OWNER || '';
 const stalledMinutes = Number(process.env.STALLED_MINUTES || 45);
 const lineChannelSecret = process.env.LINE_CHANNEL_SECRET || '';
 const lineChannelAccessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN || '';
+const lineChannelId = process.env.LINE_CHANNEL_ID || '';
+const lineLiffId = process.env.LINE_LIFF_ID || '';
+const allowedLineUserIds = new Set((process.env.LINE_ALLOWED_USER_IDS || '').split(',').map(v => v.trim()).filter(Boolean));
 const publicBaseUrl = process.env.PUBLIC_BASE_URL || '';
 
 const HUMAN_MARKERS = ['needs-approval', 'human-required', 'waiting-user', 'blocked-human', 'needs-user'];
 const BAD_CONCLUSIONS = new Set(['failure', 'cancelled', 'timed_out', 'startup_failure']);
+const authCache = new Map();
 
 function json(res, status, value) {
   res.writeHead(status, {
@@ -75,7 +79,6 @@ export async function listRepositories() {
       page += 1;
     }
   }
-
   return repos.filter(repo => !repo.archived && (!ownerFilter || repo.owner?.login === ownerFilter));
 }
 
@@ -91,7 +94,6 @@ function labelNames(item) {
 export function classifyProject({ repo, latestCommit, latestRun, openIssues, openPrs, now = Date.now(), thresholdMinutes = stalledMinutes }) {
   const humanWait = [...openIssues, ...openPrs].some(item => labelNames(item).some(label => HUMAN_MARKERS.includes(String(label).toLowerCase())));
   const actionRequired = latestRun?.conclusion === 'action_required';
-
   const lastActivity = newestTime([
     repo?.pushed_at,
     latestCommit?.commit?.committer?.date,
@@ -99,7 +101,6 @@ export function classifyProject({ repo, latestCommit, latestRun, openIssues, ope
     ...openIssues.map(i => i.updated_at),
     ...openPrs.map(i => i.updated_at)
   ]);
-
   const ageMinutes = lastActivity ? Math.floor((now - new Date(lastActivity).getTime()) / 60000) : null;
   const hasOpenWork = openIssues.length > 0 || openPrs.length > 0 || ['queued', 'in_progress', 'waiting', 'requested', 'pending'].includes(latestRun?.status);
 
@@ -115,7 +116,6 @@ export function classifyProject({ repo, latestCommit, latestRun, openIssues, ope
     signal = 'yellow';
     reason = 'stalled';
   }
-
   return { signal, reason, lastActivity, ageMinutes, hasOpenWork };
 }
 
@@ -127,13 +127,11 @@ async function getRepoStatus(repo) {
     gh(`/repos/${encoded}/issues?state=open&per_page=30`).catch(() => []),
     gh(`/repos/${encoded}/pulls?state=open&per_page=30`).catch(() => [])
   ]);
-
   const openPrNumbers = new Set(pulls.map(p => p.number));
   const pureIssues = issues.filter(i => !i.pull_request && !openPrNumbers.has(i.number));
   const latestCommit = commits[0] || null;
   const latestRun = runs.workflow_runs?.[0] || null;
   const state = classifyProject({ repo, latestCommit, latestRun, openIssues: pureIssues, openPrs: pulls });
-
   return {
     name: repo.name,
     fullName: repo.full_name,
@@ -174,7 +172,8 @@ async function getAllStatuses() {
   results.sort((a, b) => (order[a.signal] ?? 9) - (order[b.signal] ?? 9) || a.name.localeCompare(b.name));
   return {
     generatedAt: new Date().toISOString(),
-    counts: results.reduce((acc, item) => ({ ...acc, [item.signal]: (acc[item.signal] || 0) + 1 }), {}),
+    counts: results.reduce((acc, item) => ({ ...acc, [item.signal]: (acc[item.signal] || 0) + 1 }), {},
+    ),
     repositories: results
   };
 }
@@ -202,9 +201,10 @@ async function retryFailed(fullName) {
 async function executeCommand(body) {
   const { repository, command } = body || {};
   if (!repository || !command) throw new Error('repository and command are required');
-  const allowed = (await listRepositories()).some(repo => repo.full_name === repository);
-  if (!allowed) throw new Error('repository is not in the current accessible repository set');
-  if (command === 'status') return getRepoStatus((await listRepositories()).find(repo => repo.full_name === repository));
+  const repos = await listRepositories();
+  const repo = repos.find(item => item.full_name === repository);
+  if (!repo) throw new Error('repository is not in the current accessible repository set');
+  if (command === 'status') return getRepoStatus(repo);
   if (command === 'retry_failed') return retryFailed(repository);
   return dispatchCommand(repository, command);
 }
@@ -215,6 +215,36 @@ function verifyLineSignature(rawBody, signature) {
   const a = Buffer.from(expected);
   const b = Buffer.from(signature || '');
   return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+function lineUserAllowed(userId) {
+  return Boolean(userId && allowedLineUserIds.size > 0 && allowedLineUserIds.has(userId));
+}
+
+async function verifyLiffAccessToken(token) {
+  if (!lineChannelId || allowedLineUserIds.size === 0) throw new Error('LINE authorization allowlist is not configured');
+  const cached = authCache.get(token);
+  if (cached && cached.expiresAt > Date.now()) return cached.userId;
+
+  const verify = await fetch(`https://api.line.me/oauth2/v2.1/verify?access_token=${encodeURIComponent(token)}`);
+  if (!verify.ok) throw new Error('invalid LIFF access token');
+  const verified = await verify.json();
+  if (String(verified.client_id) !== String(lineChannelId) || Number(verified.expires_in) <= 0) throw new Error('LIFF token channel mismatch or expired');
+
+  const profileResponse = await fetch('https://api.line.me/v2/profile', { headers: { authorization: `Bearer ${token}` } });
+  if (!profileResponse.ok) throw new Error('unable to resolve LINE profile');
+  const profile = await profileResponse.json();
+  if (!lineUserAllowed(profile.userId)) throw new Error('LINE user is not authorized');
+
+  authCache.set(token, { userId: profile.userId, expiresAt: Date.now() + Math.min(Number(verified.expires_in) * 1000, 300000) });
+  return profile.userId;
+}
+
+async function requireLiffUser(req) {
+  const header = req.headers.authorization || '';
+  const match = /^Bearer\s+(.+)$/i.exec(header);
+  if (!match) throw new Error('LIFF authorization required');
+  return verifyLiffAccessToken(match[1]);
 }
 
 async function replyLine(replyToken, messages) {
@@ -233,7 +263,7 @@ async function replyLine(replyToken, messages) {
 async function handleLineWebhook(raw) {
   const payload = JSON.parse(raw.toString('utf8'));
   for (const event of payload.events || []) {
-    if (event.type !== 'postback') continue;
+    if (event.type !== 'postback' || !lineUserAllowed(event.source?.userId)) continue;
     const params = new URLSearchParams(event.postback?.data || '');
     const repository = params.get('repository');
     const command = params.get('command');
@@ -249,9 +279,13 @@ async function handleLineWebhook(raw) {
 }
 
 async function serveStatic(req, res) {
-  const target = req.url === '/' ? 'index.html' : req.url.replace(/^\//, '');
+  const pathname = new URL(req.url, publicBaseUrl || `http://${req.headers.host}`).pathname;
+  const target = pathname === '/' ? 'index.html' : pathname.replace(/^\//, '');
   const safe = path.normalize(target).replace(/^\.\.(\/|\\|$)/, '');
   const file = path.join(publicDir, safe);
+  if (!file.startsWith(publicDir + path.sep) && file !== path.join(publicDir, 'index.html')) {
+    res.writeHead(403); return res.end('Forbidden');
+  }
   try {
     const data = await fs.readFile(file);
     const ext = path.extname(file);
@@ -267,8 +301,13 @@ const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, publicBaseUrl || `http://${req.headers.host}`);
     if (req.method === 'GET' && url.pathname === '/health') return json(res, 200, { ok: true });
-    if (req.method === 'GET' && url.pathname === '/api/status') return json(res, 200, await getAllStatuses());
+    if (req.method === 'GET' && url.pathname === '/api/config') return json(res, 200, { liffId: lineLiffId });
+    if (req.method === 'GET' && url.pathname === '/api/status') {
+      await requireLiffUser(req);
+      return json(res, 200, await getAllStatuses());
+    }
     if (req.method === 'POST' && url.pathname === '/api/command') {
+      await requireLiffUser(req);
       const raw = await readBody(req);
       return json(res, 200, await executeCommand(JSON.parse(raw.toString('utf8'))));
     }
@@ -280,7 +319,8 @@ const server = http.createServer(async (req, res) => {
     }
     return serveStatic(req, res);
   } catch (error) {
-    return json(res, 500, { ok: false, error: error.message });
+    const unauthorized = /LIFF|LINE user|allowlist|authorization/i.test(error.message);
+    return json(res, unauthorized ? 401 : 500, { ok: false, error: error.message });
   }
 });
 
@@ -288,4 +328,4 @@ if (process.env.NODE_ENV !== 'test') {
   server.listen(port, () => console.log(`LINE project control listening on :${port}`));
 }
 
-export { executeCommand, getAllStatuses, getRepoStatus, server };
+export { executeCommand, getAllStatuses, getRepoStatus, server, verifyLiffAccessToken };
