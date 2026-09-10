@@ -1,0 +1,42 @@
+export function selectAlerts(data, { stalledMinutes = 45, intervalMinutes = 15, now = Date.now() } = {}) {
+  const windowMs = (intervalMinutes + 2) * 60_000;
+  const alerts = [];
+
+  for (const project of data.repositories || []) {
+    if (project.signal === 'yellow' && Number.isFinite(project.ageMinutes)) {
+      if (project.ageMinutes >= stalledMinutes && project.ageMinutes < stalledMinutes + intervalMinutes + 2) {
+        alerts.push({ type: 'stalled', project });
+      }
+      continue;
+    }
+
+    if (project.signal === 'red' && project.reason === 'ci_failed' && project.latestRun?.updatedAt) {
+      const updated = new Date(project.latestRun.updatedAt).getTime();
+      if (Number.isFinite(updated) && now - updated >= 0 && now - updated <= windowMs) {
+        alerts.push({ type: 'ci_failed', project });
+      }
+      continue;
+    }
+
+    if (project.signal === 'blue' && project.lastActivity) {
+      const updated = new Date(project.lastActivity).getTime();
+      if (Number.isFinite(updated) && now - updated >= 0 && now - updated <= windowMs) {
+        alerts.push({ type: 'human_wait', project });
+      }
+    }
+  }
+
+  return alerts;
+}
+
+export function buildAlertText(alerts) {
+  const lines = ['🚨 AI PROJECT CONTROL'];
+  for (const alert of alerts.slice(0, 20)) {
+    const icon = alert.type === 'ci_failed' ? '🔴' : alert.type === 'human_wait' ? '🔵' : '🟡';
+    const label = alert.type === 'ci_failed' ? 'CI失敗' : alert.type === 'human_wait' ? 'あなた待ち' : '停滞';
+    const age = alert.project.ageMinutes == null ? '' : ` / 最終活動 ${alert.project.ageMinutes}分前`;
+    lines.push(`${icon} ${alert.project.name}: ${label}${age}`);
+  }
+  lines.push('LINEで「管制盤」と送ると詳細と操作ボタンを表示します。');
+  return lines.join('\n');
+}
