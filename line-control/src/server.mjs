@@ -1,7 +1,8 @@
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { buildDashboardMessages, isDashboardRequest } from './flex.mjs';
-import { buildOrchestratorDispatch, DEFAULT_ORCHESTRATOR_REPOSITORY } from './commands.mjs';
+import { runControlJob, DEFAULT_CONTROL_PROJECT, DEFAULT_CONTROL_REGION, DEFAULT_CONTROL_JOB } from './commands.mjs';
+import { issueLineAccessToken } from './lineToken.mjs';
 
 const port = Number(process.env.PORT || 8787);
 const githubToken = process.env.CONTROL_GITHUB_TOKEN || process.env.GITHUB_TOKEN || '';
@@ -9,9 +10,12 @@ const githubApiMode = process.env.GITHUB_API_MODE || 'user';
 const ownerFilter = process.env.GITHUB_OWNER || '';
 const stalledMinutes = Number(process.env.STALLED_MINUTES || 45);
 const lineChannelSecret = process.env.LINE_CHANNEL_SECRET || '';
-const lineChannelAccessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN || '';
+const lineChannelId = process.env.LINE_CHANNEL_ID || '';
+const bootstrapCode = process.env.LINE_BOOTSTRAP_CODE || '';
 const allowedLineUserIds = new Set((process.env.LINE_ALLOWED_USER_IDS || '').split(',').map(v => v.trim()).filter(Boolean));
-const orchestratorRepository = process.env.ORCHESTRATOR_REPOSITORY || DEFAULT_ORCHESTRATOR_REPOSITORY;
+const controlProject = process.env.CONTROL_JOB_PROJECT || DEFAULT_CONTROL_PROJECT;
+const controlRegion = process.env.CONTROL_JOB_REGION || DEFAULT_CONTROL_REGION;
+const controlJob = process.env.CONTROL_JOB_NAME || DEFAULT_CONTROL_JOB;
 
 const HUMAN_MARKERS = ['needs-approval', 'human-required', 'waiting-user', 'blocked-human', 'needs-user'];
 const BAD_CONCLUSIONS = new Set(['failure', 'cancelled', 'timed_out', 'startup_failure']);
@@ -143,18 +147,11 @@ export async function getAllStatuses() {
 }
 
 async function dispatchCommand(fullName, command) {
-  const dispatch = buildOrchestratorDispatch(fullName, command, orchestratorRepository);
-  await gh(dispatch.path, {
-    method: 'POST',
-    body: JSON.stringify(dispatch.body)
+  return runControlJob(fullName, command, {
+    project: controlProject,
+    region: controlRegion,
+    job: controlJob
   });
-  return {
-    ok: true,
-    queued: true,
-    repository: fullName,
-    command,
-    queueRepository: orchestratorRepository
-  };
 }
 
 async function retryFailed(fullName) {
@@ -203,10 +200,10 @@ function lineUserAllowed(userId) {
 }
 
 async function replyLine(replyToken, messages) {
-  if (!lineChannelAccessToken) throw new Error('LINE_CHANNEL_ACCESS_TOKEN is not configured');
+  const accessToken = await issueLineAccessToken(lineChannelId, lineChannelSecret);
   const response = await fetch('https://api.line.me/v2/bot/message/reply', {
     method: 'POST',
-    headers: { authorization: `Bearer ${lineChannelAccessToken}`, 'content-type': 'application/json' },
+    headers: { authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' },
     body: JSON.stringify({ replyToken, messages: messages.slice(0, 5) })
   });
   if (!response.ok) throw new Error(`LINE reply failed: ${response.status}`);
@@ -215,7 +212,17 @@ async function replyLine(replyToken, messages) {
 async function handleLineWebhook(raw) {
   const payload = JSON.parse(raw.toString('utf8'));
   for (const event of payload.events || []) {
-    if (!lineUserAllowed(event.source?.userId) || !event.replyToken) continue;
+    if (!event.replyToken) continue;
+    const userId = event.source?.userId;
+    if (!lineUserAllowed(userId)) {
+      const bootstrapText = event.type === 'message' && event.message?.type === 'text'
+        ? event.message.text.trim() : '';
+      if (allowedLineUserIds.size === 0 && bootstrapCode && bootstrapText === `登録 ${bootstrapCode}` && userId) {
+        console.log(JSON.stringify({ event: 'line_bootstrap_user', userId }));
+        await replyLine(event.replyToken, [{ type: 'text', text: '✅ 管理者候補を確認しました。設定反映後に「管制盤」と送ってください。' }]);
+      }
+      continue;
+    }
 
     if (isDashboardRequest(event)) {
       await replyLine(event.replyToken, buildDashboardMessages(await getAllStatuses()));
@@ -234,7 +241,7 @@ async function handleLineWebhook(raw) {
       } else {
         const result = await executeCommand({ repository, command });
         const text = result.ok
-          ? `✅ ${repository}: ${command} を中央キューへ投入しました\nClaude実装はGitHub側で継続します。`
+          ? `✅ ${repository}: ${command} を中央ジョブへ投入しました\nClaude実装をCloud Run Jobで開始します。`
           : `⚠️ ${repository}: ${result.message}`;
         await replyLine(event.replyToken, [{ type: 'text', text }]);
       }
