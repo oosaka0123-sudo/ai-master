@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { resolveProjectOpenLink, resolveProjectOpenUrl } from '../src/projectLinks.mjs';
+import { resolveProjectOpenLink, resolveProjectOpenUrl, buildProjectOpenResolverUrl, verifyProjectOpenSignature } from '../src/projectLinks.mjs';
 
 test('normalizes verified project-scoped URL to direct conversation URL', () => {
   const scoped = 'https://chatgpt.com/g/g-p-demo/c/abc-123?messageId=x';
@@ -26,4 +26,20 @@ test('unverified or legacy string mappings are rejected', () => {
   }) };
   assert.equal(resolveProjectOpenUrl('oosaka0123-sudo/demo', env), null);
   assert.equal(resolveProjectOpenUrl('oosaka0123-sudo/demo2', env), null);
+});
+
+test('builds stable signed resolver URL and validates signature', () => {
+  const env = {
+    PROJECT_OPEN_LINKS_JSON: JSON.stringify({
+      'oosaka0123-sudo/demo': { url: 'https://chatgpt.com/c/abc-123', type: 'chat', verified: true }
+    }),
+    LINE_CONTROL_PUBLIC_URL: 'https://control.example.test',
+    OPEN_LINK_SIGNING_SECRET: 'test-secret'
+  };
+  const link = buildProjectOpenResolverUrl('oosaka0123-sudo/demo', env);
+  const url = new URL(link);
+  assert.equal(url.origin + url.pathname, 'https://control.example.test/open');
+  assert.equal(url.searchParams.get('repository'), 'oosaka0123-sudo/demo');
+  assert.equal(verifyProjectOpenSignature('oosaka0123-sudo/demo', url.searchParams.get('sig'), env), true);
+  assert.equal(verifyProjectOpenSignature('oosaka0123-sudo/other', url.searchParams.get('sig'), env), false);
 });
