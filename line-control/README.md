@@ -16,8 +16,8 @@ GitHubを正本のまま、LINEから複数Projectの状態確認・再開操作
 - 各Repositoryに `▶ 進めて` / `↻ 再開` / `🔧 再実行` ボタン
 - 一括操作: `黄色を全部進める` / `赤を全部再実行`
 - 停止・CI失敗・Human Gateを定期監視し、条件成立直後だけLINE Push通知
-- `continue` / `resume` は `repository_dispatch(event_type=ai-control)` を送信
-- `retry_failed` は最新の失敗Workflowについてfailed jobsだけ再実行
+- `continue` / `resume` は中央 `ai-development-orchestrator` へ `repository_dispatch(event_type=line-control)` を送り、GitHub Actions耐久キュー経由でClaude実装を開始
+- `retry_failed` は対象Project自身の最新失敗Workflowについてfailed jobsだけ再実行
 - LINE webhook署名検証 + 許可ユーザーID allowlist
 
 ## 重要な設計
@@ -26,12 +26,15 @@ GitHubを正本のまま、LINEから複数Projectの状態確認・再開操作
 
 公開Web画面から操作する方式はMVPでは採用しません。制御命令はLINE Platformが署名したWebhook経由だけで受け付け、さらに `LINE_ALLOWED_USER_IDS` に一致するユーザーだけを許可します。
 
+長時間のClaude実装をLINE webhook内で待たせません。LINEは中央Orchestrator Repositoryへ命令をキュー投入した時点ですぐ返信し、実装はGitHub Actions側で継続します。
+
 ## 必要な環境変数
 
 ```text
 CONTROL_GITHUB_TOKEN=...
 GITHUB_API_MODE=user
 GITHUB_OWNER=oosaka0123-sudo
+ORCHESTRATOR_REPOSITORY=oosaka0123-sudo/ai-development-orchestrator
 STALLED_MINUTES=45
 MONITOR_INTERVAL_MINUTES=15
 PORT=8787
@@ -44,7 +47,7 @@ LINE_ALLOWED_USER_IDS=Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 ### CONTROL_GITHUB_TOKEN
 
-推奨は専用GitHub Appまたは必要最小権限のfine-grained tokenです。Repository一覧/metadata/Issues/PR/Actionsの読み取りに加え、LINEから操作するRepositoryにはrepository dispatchとActions再実行に必要なwrite権限が必要です。
+推奨は専用GitHub Appまたは必要最小権限のfine-grained tokenです。Repository一覧/metadata/Issues/PR/Actionsの読み取り、中央Orchestrator Repositoryへのrepository dispatch、対象Projectの失敗Actions再実行に必要な権限を持たせます。
 
 SecretはRepositoryファイル、Issue、PR本文へ書かず、デプロイ先のSecret/Environment Variablesへ保存してください。
 
@@ -83,35 +86,27 @@ Secret/IAM変更はHuman Gateです。このRepositoryでは秘密値そのも�
 
 ## 一括操作の安全境界
 
-- `黄色を全部進める`: 停滞判定されたRepositoryだけに `continue` を送る
+- `黄色を全部進める`: 停滞判定されたRepositoryだけを中央Orchestratorキューへ投入
 - `赤を全部再実行`: CI失敗判定されたRepositoryだけでfailed jobsを再実行
 - 🔵 Human Gateは一括自動処理しない
 - 🟢 正常Projectは一括操作対象にしない
 - Repository削除、Visibility変更、Secret/IAM/Billing変更、force-push等の破壊的操作は実装しない
 
-## Project側の再開受口
+## 中央Orchestratorによる再開
 
-`continue` / `resume` は各Projectへ `repository_dispatch` を送ります。Project側で実作業を再開するには、そのRepositoryに `repository_dispatch: ai-control` を受けるWorkflowまたはAgent bridgeが必要です。
+`continue` / `resume` は各Project自身へdispatchしません。既定では `oosaka0123-sudo/ai-development-orchestrator` へ次の形で送ります。
 
-最小例:
-
-```yaml
-name: AI Control
-on:
-  repository_dispatch:
-    types: [ai-control]
-
-jobs:
-  control:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Show command
-        run: echo "command=${{ github.event.client_payload.command }}"
-      # Project固有Agentへの安全な橋渡しをここへ追加
+```text
+repository_dispatch event_type: line-control
+client_payload.repository: <target owner/repo>
+client_payload.command: continue | resume
 ```
 
-外部Agent呼び出しは各Projectの権限・Secret・Human Gateを尊重します。
+中央OrchestratorはGitHub Actionsを耐久キューとして使い、対象Repositoryのcurrent default branch、Projectルール、Open Issues、Open PRs、最新Actions、現在コードを確認したうえで、明確で安全な未完了作業だけをClaude Agentへ再委任します。結果は新規branch + Pull Requestまでで停止し、自動merge・本番deployは行いません。
+
+この方式では対象Project側に `repository_dispatch` listenerを配布する必要がありません。そのため、新しいRepositoryが増えても中央OrchestratorのGitHub credentialがアクセスできる範囲なら、個別セットアップなしで「進めて」「再開」の対象にできます。
+
+中央Orchestrator側のActions実行には、同RepositoryのActions Secretsとして `ORCHESTRATOR_GITHUB_TOKEN` と `ANTHROPIC_API_KEY` が必要です。値はコードに保存しません。
 
 ## 信号判定の誤検知対策
 
@@ -121,10 +116,13 @@ jobs:
 
 固定リストは使いません。GitHub APIのアクセス可能Repository集合を毎回取得するため、新しいRepositoryが増えると次回の監視・`管制盤` 更新から自動で表示対象になります。archived Repositoryは除外されます。
 
-## 次段階
+「表示だけ自動」ではなく、中央Orchestratorキューを使うため再開操作もProject側listenerなしで自動対応します。ただし、中央Orchestratorの専用GitHub credentialがそのRepositoryへアクセスできることが前提です。
 
-- HTTPSで常時起動できるデプロイ先を決定
-- LINE Channel Secret / Access Token / allowlistをHuman Gateで設定
-- GitHub専用credentialをHuman Gateで設定
-- 対象Projectへ `repository_dispatch` listenerを段階的に配布
-- Claude Code / Codex / Jules等、Projectごとの実Agent bridgeを追加
+## 残る本番設定
+
+- HTTPSで常時起動できるLINE管制塔のデプロイ先
+- LINE Channel Secret / Access Token / allowlist
+- LINE管制塔用GitHub credential
+- 中央Orchestrator Actions用 `ORCHESTRATOR_GITHUB_TOKEN` / `ANTHROPIC_API_KEY`
+
+これらSecret/IAM設定はHuman Gateで行い、値そのものはRepositoryへ保存しません。
