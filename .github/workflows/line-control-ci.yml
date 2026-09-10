@@ -27,7 +27,7 @@ jobs:
           node-version: '20'
       - name: Syntax check
         working-directory: line-control
-        run: node --check src/server.mjs && node --check src/flex.mjs && node --check src/monitor.mjs && node --check src/start.mjs && node --check src/commands.mjs
+        run: node --check src/server.mjs && node --check src/flex.mjs && node --check src/monitor.mjs && node --check src/start.mjs && node --check src/commands.mjs && node --check src/lineToken.mjs
       - name: Unit tests
         working-directory: line-control
         run: npm test

@@ -1,3 +1,5 @@
+import { issueLineAccessToken } from './lineToken.mjs';
+
 export function selectAlerts(data, { stalledMinutes = 45, intervalMinutes = 15, now = Date.now() } = {}) {
   const windowMs = (intervalMinutes + 2) * 60_000;
   const alerts = [];
@@ -41,11 +43,12 @@ export function buildAlertText(alerts) {
   return lines.join('\n');
 }
 
-async function pushText(channelAccessToken, userId, text) {
+async function pushText(channelId, channelSecret, userId, text) {
+  const accessToken = await issueLineAccessToken(channelId, channelSecret);
   const response = await fetch('https://api.line.me/v2/bot/message/push', {
     method: 'POST',
     headers: {
-      authorization: `Bearer ${channelAccessToken}`,
+      authorization: `Bearer ${accessToken}`,
       'content-type': 'application/json'
     },
     body: JSON.stringify({ to: userId, messages: [{ type: 'text', text }] })
@@ -53,9 +56,9 @@ async function pushText(channelAccessToken, userId, text) {
   if (!response.ok) throw new Error(`LINE push failed: ${response.status}`);
 }
 
-export function startMonitor({ getStatuses, channelAccessToken, userIds, stalledMinutes = 45, intervalMinutes = 15, logger = console }) {
-  if (!channelAccessToken || !userIds?.length) {
-    logger.warn('LINE monitor disabled: token or allowed user IDs are not configured');
+export function startMonitor({ getStatuses, channelId, channelSecret, userIds, stalledMinutes = 45, intervalMinutes = 15, logger = console }) {
+  if (!channelId || !channelSecret || !userIds?.length) {
+    logger.warn('LINE monitor disabled: channel credentials or allowed user IDs are not configured');
     return () => {};
   }
 
@@ -68,7 +71,7 @@ export function startMonitor({ getStatuses, channelAccessToken, userIds, stalled
       const alerts = selectAlerts(data, { stalledMinutes, intervalMinutes });
       if (!alerts.length) return;
       const text = buildAlertText(alerts);
-      for (const userId of userIds) await pushText(channelAccessToken, userId, text);
+      for (const userId of userIds) await pushText(channelId, channelSecret, userId, text);
     } catch (error) {
       logger.error('LINE monitor tick failed', error);
     } finally {

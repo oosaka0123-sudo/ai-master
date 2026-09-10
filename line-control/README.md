@@ -40,12 +40,13 @@ CONTROL_JOB_NAME=rss7-ai-control-runner
 STALLED_MINUTES=45
 MONITOR_INTERVAL_MINUTES=15
 PORT=8787
+LINE_CHANNEL_ID=...
 LINE_CHANNEL_SECRET=...
-LINE_CHANNEL_ACCESS_TOKEN=...
+LINE_BOOTSTRAP_CODE=...   # 初回登録時だけ
 LINE_ALLOWED_USER_IDS=Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-複数人を許可する場合は `LINE_ALLOWED_USER_IDS` をカンマ区切りにします。
+複数人を許可する場合は `LINE_ALLOWED_USER_IDS` をカンマ区切りにします。長期Channel Access Tokenは保存せず、Channel ID + Secretから15分有効のstateless tokenを送信時に発行します。
 
 ### CONTROL_GITHUB_TOKEN
 
@@ -77,12 +78,12 @@ npm start
 
 ## LINE設定
 
-1. LINE DevelopersでMessaging API Channelを作成
-2. Webhook URLを `https://<host>/webhook/line` に設定
-3. Channel Secret / Channel Access Tokenをデプロイ環境のSecretへ設定
-4. 自分のLINE user IDを `LINE_ALLOWED_USER_IDS` に設定
-5. LINE公式アカウントへ `管制盤` と送信
-6. 表示されたFlexカードから操作
+1. LINE DevelopersでMessaging API Channelを有効化
+2. Webhook URLを `https://rss7-ai-line-control-415190643779.asia-northeast1.run.app/webhook/line` に設定
+3. Channel IDを環境変数、Channel SecretをSecret Managerへ設定
+4. 初回だけ `LINE_BOOTSTRAP_CODE` を設定し、allowlistを空にしてLINEから `登録 <code>` を送信
+5. Cloud Loggingで確認したuser IDを `LINE_ALLOWED_USER_IDS` に設定し、bootstrap codeを削除
+6. LINE公式アカウントへ `管制盤` と送信し、Flexカードから操作
 
 Secret/IAM変更はHuman Gateです。このRepositoryでは秘密値そのものを保存しません。
 
@@ -112,13 +113,12 @@ Job起動時に `CONTROL_REPOSITORY=<target owner/repo>` と `CONTROL_COMMAND=co
 
 固定リストは使いません。GitHub APIのアクセス可能Repository集合を毎回取得するため、新しいRepositoryが増えると次回の監視・`管制盤` 更新から自動で表示対象になります。archived Repositoryは除外されます。
 
-「表示だけ自動」ではなく、中央Orchestratorキューを使うため再開操作もProject側listenerなしで自動対応します。ただし、中央Orchestratorの専用GitHub credentialがそのRepositoryへアクセスできることが前提です。
+「表示だけ自動」ではなく、中央Cloud Run Jobを使うため再開操作もProject側listenerなしで自動対応します。ただし、中央Orchestratorの専用GitHub credentialがそのRepositoryへアクセスできることが前提です。
 
 ## 残る本番設定
 
-- HTTPSで常時起動できるLINE管制塔のデプロイ先
-- LINE Channel Secret / Access Token / allowlist
-- LINE管制塔用GitHub credential
-- 中央Orchestrator Actions用 `ORCHESTRATOR_GITHUB_TOKEN` / `ANTHROPIC_API_KEY`
+- LINE Webhook URLの登録
+- LINE Channel ID / Secret / allowlist
+- 初回bootstrap後の `LINE_BOOTSTRAP_CODE` 削除
 
 これらSecret/IAM設定はHuman Gateで行い、値そのものはRepositoryへ保存しません。
