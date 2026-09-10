@@ -1,6 +1,7 @@
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { buildDashboardMessages, isDashboardRequest } from './flex.mjs';
+import { buildOrchestratorDispatch, DEFAULT_ORCHESTRATOR_REPOSITORY } from './commands.mjs';
 
 const port = Number(process.env.PORT || 8787);
 const githubToken = process.env.CONTROL_GITHUB_TOKEN || process.env.GITHUB_TOKEN || '';
@@ -10,6 +11,7 @@ const stalledMinutes = Number(process.env.STALLED_MINUTES || 45);
 const lineChannelSecret = process.env.LINE_CHANNEL_SECRET || '';
 const lineChannelAccessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN || '';
 const allowedLineUserIds = new Set((process.env.LINE_ALLOWED_USER_IDS || '').split(',').map(v => v.trim()).filter(Boolean));
+const orchestratorRepository = process.env.ORCHESTRATOR_REPOSITORY || DEFAULT_ORCHESTRATOR_REPOSITORY;
 
 const HUMAN_MARKERS = ['needs-approval', 'human-required', 'waiting-user', 'blocked-human', 'needs-user'];
 const BAD_CONCLUSIONS = new Set(['failure', 'cancelled', 'timed_out', 'startup_failure']);
@@ -141,14 +143,18 @@ export async function getAllStatuses() {
 }
 
 async function dispatchCommand(fullName, command) {
-  await gh(`/repos/${fullName}/dispatches`, {
+  const dispatch = buildOrchestratorDispatch(fullName, command, orchestratorRepository);
+  await gh(dispatch.path, {
     method: 'POST',
-    body: JSON.stringify({
-      event_type: 'ai-control',
-      client_payload: { command, source: 'line-control', requested_at: new Date().toISOString() }
-    })
+    body: JSON.stringify(dispatch.body)
   });
-  return { ok: true, repository: fullName, command };
+  return {
+    ok: true,
+    queued: true,
+    repository: fullName,
+    command,
+    queueRepository: orchestratorRepository
+  };
 }
 
 async function retryFailed(fullName) {
@@ -227,7 +233,9 @@ async function handleLineWebhook(raw) {
         await replyLine(event.replyToken, [{ type: 'text', text: `✅ 一括処理: 対象${result.total} / 成功${result.succeeded} / 失敗${result.failed}\n「管制盤」と送ると最新状態を表示します。` }]);
       } else {
         const result = await executeCommand({ repository, command });
-        const text = result.ok ? `✅ ${repository}: ${command} を送信しました` : `⚠️ ${repository}: ${result.message}`;
+        const text = result.ok
+          ? `✅ ${repository}: ${command} を中央キューへ投入しました\nClaude実装はGitHub側で継続します。`
+          : `⚠️ ${repository}: ${result.message}`;
         await replyLine(event.replyToken, [{ type: 'text', text }]);
       }
     } catch (error) {
