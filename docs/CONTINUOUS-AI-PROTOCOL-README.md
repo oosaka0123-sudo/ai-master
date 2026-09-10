@@ -1,0 +1,1 @@
+This repository now contains `docs/CONTINUOUS-AI-PROTOCOL.md`, which defines the stopless multi-agent execution loop. Project repositories should link to it rather than copy its contents. Project-specific execution details remain in each project's AGENTS.md / DECISIONS.md / RUNBOOK.md.
