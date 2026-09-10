@@ -1,8 +1,9 @@
 process.env.NODE_ENV = 'test';
 
 const { getAllStatuses } = await import('./server.mjs');
-const { selectAlerts, buildAlertText, pushText } = await import('./monitor.mjs');
-const { getRecentRunnerFailures, buildRunnerFailureText } = await import('./runnerHealth.mjs');
+const { selectAlerts, pushMessages } = await import('./monitor.mjs');
+const { buildAlertMessages, buildRunnerFailureMessages } = await import('./flex.mjs');
+const { getRecentRunnerFailures } = await import('./runnerHealth.mjs');
 
 const channelId = process.env.LINE_CHANNEL_ID || '';
 const channelSecret = process.env.LINE_CHANNEL_SECRET || '';
@@ -22,12 +23,12 @@ const runnerFailures = await getRecentRunnerFailures({ windowMinutes: intervalMi
 });
 
 if (alerts.length) {
-  const text = buildAlertText(alerts);
-  for (const userId of userIds) await pushText(channelId, channelSecret, userId, text);
+  const messages = buildAlertMessages(alerts);
+  for (const userId of userIds) await pushMessages(channelId, channelSecret, userId, messages);
 }
 if (runnerFailures.length) {
-  const text = buildRunnerFailureText(runnerFailures);
-  for (const userId of userIds) await pushText(channelId, channelSecret, userId, text);
+  const messages = buildRunnerFailureMessages(runnerFailures);
+  for (const userId of userIds) await pushMessages(channelId, channelSecret, userId, messages);
 }
 
 console.log(JSON.stringify({

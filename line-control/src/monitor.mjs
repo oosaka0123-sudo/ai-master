@@ -1,4 +1,5 @@
 import { issueLineAccessToken } from './lineToken.mjs';
+import { buildAlertMessages } from './flex.mjs';
 
 export function selectAlerts(data, { stalledMinutes = 45, intervalMinutes = 15, now = Date.now() } = {}) {
   const windowMs = (intervalMinutes + 2) * 60_000;
@@ -43,7 +44,7 @@ export function buildAlertText(alerts) {
   return lines.join('\n');
 }
 
-export async function pushText(channelId, channelSecret, userId, text) {
+export async function pushMessages(channelId, channelSecret, userId, messages) {
   const accessToken = await issueLineAccessToken(channelId, channelSecret);
   const response = await fetch('https://api.line.me/v2/bot/message/push', {
     method: 'POST',
@@ -51,9 +52,13 @@ export async function pushText(channelId, channelSecret, userId, text) {
       authorization: `Bearer ${accessToken}`,
       'content-type': 'application/json'
     },
-    body: JSON.stringify({ to: userId, messages: [{ type: 'text', text }] })
+    body: JSON.stringify({ to: userId, messages: messages.slice(0, 5) })
   });
   if (!response.ok) throw new Error(`LINE push failed: ${response.status}`);
+}
+
+export async function pushText(channelId, channelSecret, userId, text) {
+  return pushMessages(channelId, channelSecret, userId, [{ type: 'text', text }]);
 }
 
 export function startMonitor({ getStatuses, channelId, channelSecret, userIds, stalledMinutes = 45, intervalMinutes = 15, logger = console }) {
@@ -70,8 +75,8 @@ export function startMonitor({ getStatuses, channelId, channelSecret, userIds, s
       const data = await getStatuses();
       const alerts = selectAlerts(data, { stalledMinutes, intervalMinutes });
       if (!alerts.length) return;
-      const text = buildAlertText(alerts);
-      for (const userId of userIds) await pushText(channelId, channelSecret, userId, text);
+      const messages = buildAlertMessages(alerts);
+      for (const userId of userIds) await pushMessages(channelId, channelSecret, userId, messages);
     } catch (error) {
       logger.error('LINE monitor tick failed', error);
     } finally {

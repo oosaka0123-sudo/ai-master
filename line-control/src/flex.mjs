@@ -100,6 +100,35 @@ export function buildDashboardMessages(data) {
   return messages.slice(0, 5);
 }
 
+export function buildAlertMessages(alerts) {
+  const projects = (alerts || []).map(alert => alert.project).filter(Boolean);
+  const messages = [];
+  const chunkSize = 10;
+  for (let i = 0; i < projects.length; i += chunkSize) {
+    messages.push({
+      type: 'flex',
+      altText: 'AI PROJECT CONTROL 自動通知',
+      contents: { type: 'carousel', contents: projects.slice(i, i + chunkSize).map(projectBubble) }
+    });
+  }
+  return messages.slice(0, 5);
+}
+
+export function buildRunnerFailureMessages(failures) {
+  if (!failures?.length) return [];
+  const detail = failures.slice(0, 5).map(f => `・${f.name}: ${f.reason}`).join('\n');
+  return [{
+    type: 'flex', altText: 'AI PROJECT CONTROL 中央Runner停止',
+    contents: { type: 'bubble', body: { type: 'box', layout: 'vertical', spacing: 'md', contents: [
+      { type: 'text', text: '🔴 AI PROJECT CONTROL', weight: 'bold', size: 'lg' },
+      { type: 'text', text: '中央Orchestratorの実行が停止しました', weight: 'bold', wrap: true },
+      { type: 'text', text: detail, size: 'sm', color: '#888888', wrap: true }
+    ] }, footer: { type: 'box', layout: 'vertical', spacing: 'sm', contents: [
+      postback('🔄 今すぐ更新', null, 'dashboard', 'primary')
+    ] } }
+  }];
+}
+
 export function isDashboardRequest(event) {
   if (event.type === 'message' && event.message?.type === 'text') {
     return /^(管制盤|状態|一覧|status|dashboard)$/i.test(event.message.text.trim());
