@@ -16,15 +16,17 @@
 6. Open Issues / Open PRs / Latest Actions / current codeを確認
 7. 作業開始
 
-`CONNECT.md` は接続状態を確認するときだけ、`DECISIONS.md` はMaster設計の理由を確認するときだけ読みます。最初から全ファイルを一括ロードしません。
+一度停止したProjectを `resume` する場合は、作業再開前に `AI_COUNCIL.md` を読み、Claude・Gemini・ChatGPTの3-round Council gateを通します。Council実行エンジンの正本は `oosaka0123-sudo/ai-development-orchestrator` です。
+
+`CONNECT.md` は接続状態を確認するときだけ、`AI_COUNCIL.md` は停止Projectの再開・Council triggerを扱うときだけ、`DECISIONS.md` はMaster設計の理由を確認するときだけ読みます。最初から全ファイルを一括ロードしません。
 
 ## Source of Truth
 
-- **Master**: 共通安全ルール、共通運用原則、Repositoryへの案内、接続状態
+- **Master**: 共通安全ルール、共通運用原則、Repositoryへの案内、接続状態、AI Council共通ポリシー
 - **Project Repository**: Project固有の仕様、コード、Issue、PR、CI、実装状態、設計判断
 - **チャット履歴 / LLMの記憶**: 参考情報。正本ではない
 
-MasterへProject固有の進捗や仕様をコピーしません。
+MasterへProject固有の進捗や仕様、Council結果をコピーしません。
 
 ## Conflict / Precedence
 
@@ -32,9 +34,10 @@ MasterへProject固有の進捗や仕様をコピーしません。
 
 1. **Security / Secret protection / SSOT / No fabrication**: `ai-master/AGENTS.md` の GLOBAL MUST / MUST NOT が最優先。Project側から緩められません。
 2. **Project固有の仕様・コード・実装状態**: 対象Project Repositoryが正本です。
-3. **Projectローカル運用ルール**: Project側 `AGENTS.md` 等が、Masterの `DEFAULT` をそのProject内だけ上書きできます。
-4. **現在状態**: current code / Issue / PR / Actions等のGitHub実態を優先し、古い文書は修正対象として扱います。
-5. **過去チャット・LLMの記憶**: GitHubと矛盾する場合は採用しません。
+3. **AI Council resume policy**: `AI_COUNCIL.md` を正本とし、停止Projectの `resume` はCouncil未完了のまま実装へ進めません。
+4. **Projectローカル運用ルール**: Project側 `AGENTS.md` 等が、Masterの `DEFAULT` をそのProject内だけ上書きできます。ただし上位Securityルールや必須resume gateは緩められません。
+5. **現在状態**: current code / Issue / PR / Actions等のGitHub実態を優先し、古い文書は修正対象として扱います。
+6. **過去チャット・LLMの記憶**: GitHubと矛盾する場合は採用しません。
 
 重大な矛盾で安全に解決できない場合は、差分を明示して人間へエスカレーションします。
 
@@ -42,6 +45,7 @@ MasterへProject固有の進捗や仕様をコピーしません。
 
 - `README.md` — 入口、読み込み順、優先順位
 - `AGENTS.md` — 全AI共通の憲法（GLOBAL MUST / MUST NOT / DEFAULT）
+- `AI_COUNCIL.md` — 停止Project再開時の3者Council gateと共通判定ルール
 - `CONNECT.md` — 接続状態・確認済み能力のみ
 - `PROJECTS.md` — 公開Project Repositoryの住所録のみ
 - `DECISIONS.md` — Master設計判断の理由（ADR）。日常命令の正本ではない
