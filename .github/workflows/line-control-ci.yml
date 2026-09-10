@@ -1,0 +1,33 @@
+name: LINE Control CI
+
+on:
+  pull_request:
+    paths:
+      - 'line-control/**'
+      - '.github/workflows/line-control-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'line-control/**'
+      - '.github/workflows/line-control-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Syntax check
+        working-directory: line-control
+        run: node --check src/server.mjs && node --check src/flex.mjs
+      - name: Unit tests
+        working-directory: line-control
+        run: npm test
