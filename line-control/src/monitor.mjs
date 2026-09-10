@@ -43,7 +43,7 @@ export function buildAlertText(alerts) {
   return lines.join('\n');
 }
 
-async function pushText(channelId, channelSecret, userId, text) {
+export async function pushText(channelId, channelSecret, userId, text) {
   const accessToken = await issueLineAccessToken(channelId, channelSecret);
   const response = await fetch('https://api.line.me/v2/bot/message/push', {
     method: 'POST',
