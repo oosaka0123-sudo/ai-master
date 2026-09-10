@@ -30,3 +30,15 @@ test('yellow only when open work is stale', () => {
   assert.equal(out.signal, 'yellow');
   assert.equal(out.reason, 'stalled');
 });
+
+
+test('done only when no open work and latest workflow succeeded', () => {
+  const out = classifyProject({
+    repo: baseRepo,
+    latestCommit: commit,
+    latestRun: { status: 'completed', conclusion: 'success', updated_at: '2026-09-09T23:59:00Z' },
+    openIssues: [], openPrs: [], now, thresholdMinutes: 45
+  });
+  assert.equal(out.signal, 'done');
+  assert.equal(out.reason, 'completed');
+});

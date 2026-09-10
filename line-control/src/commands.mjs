@@ -40,7 +40,7 @@ export function buildRunJobRequest(repository, command, options = {}) {
   };
 }
 
-async function metadataAccessToken(fetchFn) {
+export async function metadataAccessToken(fetchFn) {
   const response = await fetchFn('http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token', {
     headers: { 'Metadata-Flavor': 'Google' }
   });
