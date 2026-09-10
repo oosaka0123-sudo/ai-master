@@ -1,7 +1,10 @@
-function safeChatGptUrl(value) {
+function safeDirectConversationUrl(value) {
   try {
     const url = new URL(value);
-    return url.protocol === 'https:' && url.hostname === 'chatgpt.com' ? url.toString() : null;
+    if (url.protocol !== 'https:' || url.hostname !== 'chatgpt.com') return null;
+    const match = url.pathname.match(/\/c\/([^/?#]+)/);
+    if (!match) return null;
+    return `https://chatgpt.com/c/${match[1]}`;
   } catch {
     return null;
   }
@@ -22,7 +25,7 @@ function normalizeEntry(entry) {
   if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null;
   if (entry.verified !== true) return null;
   if (!['chat', 'work'].includes(entry.type)) return null;
-  const url = safeChatGptUrl(entry.url);
+  const url = safeDirectConversationUrl(entry.url);
   return url ? { url, type: entry.type, verified: true } : null;
 }
 export function resolveProjectOpenLink(fullName, env = process.env) {

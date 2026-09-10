@@ -2,15 +2,21 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { resolveProjectOpenLink, resolveProjectOpenUrl } from '../src/projectLinks.mjs';
 
-test('uses only verified repo-specific ChatGPT link', () => {
-  const direct = 'https://chatgpt.com/c/rss7-house-test';
+test('normalizes verified project-scoped URL to direct conversation URL', () => {
+  const scoped = 'https://chatgpt.com/g/g-p-demo/c/abc-123?messageId=x';
   const env = { PROJECT_OPEN_LINKS_JSON: JSON.stringify({
-    'oosaka0123-sudo/rss7-house': { url: direct, type: 'chat', verified: true }
+    'oosaka0123-sudo/demo': { url: scoped, type: 'chat', verified: true }
   }) };
-  assert.deepEqual(resolveProjectOpenLink('oosaka0123-sudo/rss7-house', env), {
-    url: direct, type: 'chat', verified: true
+  assert.deepEqual(resolveProjectOpenLink('oosaka0123-sudo/demo', env), {
+    url: 'https://chatgpt.com/c/abc-123', type: 'chat', verified: true
   });
-  assert.equal(resolveProjectOpenUrl('oosaka0123-sudo/rss7-house', env), direct);
+});
+
+test('rejects project-home URL because it is not an exact conversation', () => {
+  const env = { PROJECT_OPEN_LINKS_JSON: JSON.stringify({
+    'oosaka0123-sudo/demo': { url: 'https://chatgpt.com/g/g-p-demo/project', type: 'work', verified: true }
+  }) };
+  assert.equal(resolveProjectOpenUrl('oosaka0123-sudo/demo', env), null);
 });
 
 test('unverified or legacy string mappings are rejected', () => {
