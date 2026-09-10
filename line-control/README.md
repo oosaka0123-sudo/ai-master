@@ -1,6 +1,6 @@
 # LINE Project Control Center
 
-GitHubを正本のまま、LINEから複数Projectの状態確認と安全な再開操作を行うための最小実装です。
+GitHubを正本のまま、LINEから複数Projectの状態確認・再開操作・停止通知を行うための管制塔です。
 
 ## できること
 
@@ -15,13 +15,14 @@ GitHubを正本のまま、LINEから複数Projectの状態確認と安全な再
 - LINEで「管制盤」と送るとFlexメッセージの一覧を返信
 - 各Repositoryに `▶ 進めて` / `↻ 再開` / `🔧 再実行` ボタン
 - 一括操作: `黄色を全部進める` / `赤を全部再実行`
+- 停止・CI失敗・Human Gateを定期監視し、条件成立直後だけLINE Push通知
 - `continue` / `resume` は `repository_dispatch(event_type=ai-control)` を送信
 - `retry_failed` は最新の失敗Workflowについてfailed jobsだけ再実行
 - LINE webhook署名検証 + 許可ユーザーID allowlist
 
 ## 重要な設計
 
-`ai-master` には動的なSTATUSコピーを保存しません。LINEで管制盤を要求された時点でGitHub APIから現在状態を取得します。Private Repository名や状態をPublic Masterへ永続化しません。
+`ai-master` には動的なSTATUSコピーを保存しません。LINEで管制盤を要求された時点、または監視チェック時点でGitHub APIから現在状態を取得します。Private Repository名や状態をPublic Masterへ永続化しません。
 
 公開Web画面から操作する方式はMVPでは採用しません。制御命令はLINE Platformが署名したWebhook経由だけで受け付け、さらに `LINE_ALLOWED_USER_IDS` に一致するユーザーだけを許可します。
 
@@ -32,6 +33,7 @@ CONTROL_GITHUB_TOKEN=...
 GITHUB_API_MODE=user
 GITHUB_OWNER=oosaka0123-sudo
 STALLED_MINUTES=45
+MONITOR_INTERVAL_MINUTES=15
 PORT=8787
 LINE_CHANNEL_SECRET=...
 LINE_CHANNEL_ACCESS_TOKEN=...
@@ -54,7 +56,19 @@ npm test
 npm start
 ```
 
-`GET /health` が `{"ok":true}` を返せばプロセスは稼働しています。LINE webhookは `POST /webhook/line` です。
+`npm start` でWebhookサーバーと自動監視が同時に起動します。`GET /health` が `{"ok":true}` を返せばプロセスは稼働しています。LINE webhookは `POST /webhook/line` です。
+
+## 自動通知
+
+監視間隔は `MONITOR_INTERVAL_MINUTES`、停滞判定は `STALLED_MINUTES` で調整します。
+
+通知対象:
+
+- 🟡 停滞: `STALLED_MINUTES` を越えた直後の監視窓だけ通知
+- 🔴 CI失敗: 最新Workflow失敗直後だけ通知
+- 🔵 Human Gate: 承認待ち・人間操作待ちが発生した直後だけ通知
+
+古い停止状態を毎回通知し続けないよう、永続的な通知履歴を保存せず「条件成立直後の時間窓」で判定します。サービス再起動時も古い障害を大量再通知しにくい設計です。
 
 ## LINE設定
 
@@ -105,7 +119,7 @@ jobs:
 
 ## 新規Repository
 
-固定リストは使いません。GitHub APIのアクセス可能Repository集合を毎回取得するため、新しいRepositoryが増えると次回の `管制盤` 更新から自動で表示対象になります。archived Repositoryは除外されます。
+固定リストは使いません。GitHub APIのアクセス可能Repository集合を毎回取得するため、新しいRepositoryが増えると次回の監視・`管制盤` 更新から自動で表示対象になります。archived Repositoryは除外されます。
 
 ## 次段階
 
@@ -114,4 +128,3 @@ jobs:
 - GitHub専用credentialをHuman Gateで設定
 - 対象Projectへ `repository_dispatch` listenerを段階的に配布
 - Claude Code / Codex / Jules等、Projectごとの実Agent bridgeを追加
-- 停止条件を定期監視し、異常時だけLINE Push通知する
