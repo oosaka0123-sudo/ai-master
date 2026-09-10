@@ -1,5 +1,3 @@
-const SAFE_FALLBACK_URL = 'https://chatgpt.com/';
-
 function safeChatGptUrl(value) {
   try {
     const url = new URL(value);
@@ -20,11 +18,17 @@ function envLinks(env = process.env) {
   }
 }
 
+function normalizeEntry(entry) {
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null;
+  if (entry.verified !== true) return null;
+  if (!['chat', 'work'].includes(entry.type)) return null;
+  const url = safeChatGptUrl(entry.url);
+  return url ? { url, type: entry.type, verified: true } : null;
+}
+export function resolveProjectOpenLink(fullName, env = process.env) {
+  return normalizeEntry(envLinks(env)[fullName]);
+}
+
 export function resolveProjectOpenUrl(fullName, env = process.env) {
-  const links = envLinks(env);
-  const custom = links[fullName];
-  return safeChatGptUrl(custom)
-    || safeChatGptUrl(links.__default)
-    || safeChatGptUrl(env.DEFAULT_AI_OPEN_URL)
-    || SAFE_FALLBACK_URL;
+  return resolveProjectOpenLink(fullName, env)?.url || null;
 }

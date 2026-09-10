@@ -1,24 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { resolveProjectOpenUrl } from '../src/projectLinks.mjs';
+import { resolveProjectOpenLink, resolveProjectOpenUrl } from '../src/projectLinks.mjs';
 
-test('uses configured repo-specific ChatGPT link', () => {
+test('uses only verified repo-specific ChatGPT link', () => {
   const direct = 'https://chatgpt.com/c/rss7-house-test';
-  const url = resolveProjectOpenUrl('oosaka0123-sudo/rss7-house', {
-    PROJECT_OPEN_LINKS_JSON: JSON.stringify({ 'oosaka0123-sudo/rss7-house': direct })
+  const env = { PROJECT_OPEN_LINKS_JSON: JSON.stringify({
+    'oosaka0123-sudo/rss7-house': { url: direct, type: 'chat', verified: true }
+  }) };
+  assert.deepEqual(resolveProjectOpenLink('oosaka0123-sudo/rss7-house', env), {
+    url: direct, type: 'chat', verified: true
   });
-  assert.equal(url, direct);
+  assert.equal(resolveProjectOpenUrl('oosaka0123-sudo/rss7-house', env), direct);
 });
 
-test('rejects non-ChatGPT URL and uses safe fallback', () => {
-  const url = resolveProjectOpenUrl('oosaka0123-sudo/demo', {
-    PROJECT_OPEN_LINKS_JSON: JSON.stringify({ 'oosaka0123-sudo/demo': 'https://example.com/' })
-  });
-  assert.equal(url, 'https://chatgpt.com/');
-});
-
-test('unknown repo can use central AI chat fallback', () => {
-  const fallback = 'https://chatgpt.com/c/central-test';
-  const url = resolveProjectOpenUrl('oosaka0123-sudo/new-repo', { DEFAULT_AI_OPEN_URL: fallback });
-  assert.equal(url, fallback);
+test('unverified or legacy string mappings are rejected', () => {
+  const env = { PROJECT_OPEN_LINKS_JSON: JSON.stringify({
+    'oosaka0123-sudo/demo': 'https://chatgpt.com/c/wrong',
+    'oosaka0123-sudo/demo2': { url: 'https://chatgpt.com/c/wrong2', type: 'chat', verified: false }
+  }) };
+  assert.equal(resolveProjectOpenUrl('oosaka0123-sudo/demo', env), null);
+  assert.equal(resolveProjectOpenUrl('oosaka0123-sudo/demo2', env), null);
 });
