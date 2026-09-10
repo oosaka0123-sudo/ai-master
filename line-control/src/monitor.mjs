@@ -40,3 +40,44 @@ export function buildAlertText(alerts) {
   lines.push('LINEで「管制盤」と送ると詳細と操作ボタンを表示します。');
   return lines.join('\n');
 }
+
+async function pushText(channelAccessToken, userId, text) {
+  const response = await fetch('https://api.line.me/v2/bot/message/push', {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${channelAccessToken}`,
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({ to: userId, messages: [{ type: 'text', text }] })
+  });
+  if (!response.ok) throw new Error(`LINE push failed: ${response.status}`);
+}
+
+export function startMonitor({ getStatuses, channelAccessToken, userIds, stalledMinutes = 45, intervalMinutes = 15, logger = console }) {
+  if (!channelAccessToken || !userIds?.length) {
+    logger.warn('LINE monitor disabled: token or allowed user IDs are not configured');
+    return () => {};
+  }
+
+  let running = false;
+  const tick = async () => {
+    if (running) return;
+    running = true;
+    try {
+      const data = await getStatuses();
+      const alerts = selectAlerts(data, { stalledMinutes, intervalMinutes });
+      if (!alerts.length) return;
+      const text = buildAlertText(alerts);
+      for (const userId of userIds) await pushText(channelAccessToken, userId, text);
+    } catch (error) {
+      logger.error('LINE monitor tick failed', error);
+    } finally {
+      running = false;
+    }
+  };
+
+  const timer = setInterval(tick, intervalMinutes * 60_000);
+  timer.unref?.();
+  tick();
+  return () => clearInterval(timer);
+}
