@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 import { buildDashboardMessages, excludeDashboardRepositories, isDashboardRequest } from './flex.mjs';
 import { runControlJob, DEFAULT_CONTROL_PROJECT, DEFAULT_CONTROL_REGION, DEFAULT_CONTROL_JOB } from './commands.mjs';
 import { issueLineAccessToken } from './lineToken.mjs';
-import { resolveProjectOpenLink } from './projectLinks.mjs';
+import { resolveProjectOpenLink, buildProjectOpenResolverUrl, verifyProjectOpenSignature } from './projectLinks.mjs';
 
 const port = Number(process.env.PORT || 8787);
 const githubToken = process.env.CONTROL_GITHUB_TOKEN || process.env.GITHUB_TOKEN || '';
@@ -119,7 +119,7 @@ export async function getRepoStatus(repo) {
     openIssues: pureIssues.length,
     openPrs: pulls.length,
     latestRun: latestRun ? { id: latestRun.id, status: latestRun.status, conclusion: latestRun.conclusion, updatedAt: latestRun.updated_at } : null,
-    openUrl: openLink?.url || null,
+    openUrl: openLink ? buildProjectOpenResolverUrl(fullName) : null,
     openType: openLink?.type || null,
     ...classifyProject({ repo, latestCommit, latestRun, openIssues: pureIssues, openPrs: pulls })
   };
@@ -136,7 +136,7 @@ export async function getAllStatuses() {
       private: Boolean(repo.private),
       signal: 'red',
       reason: 'status_error',
-      openUrl: resolveProjectOpenLink(repo.full_name)?.url || null,
+      openUrl: buildProjectOpenResolverUrl(repo.full_name),
       openType: resolveProjectOpenLink(repo.full_name)?.type || null,
       error: error.message
     })))));
@@ -264,6 +264,16 @@ const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
     if (req.method === 'GET' && url.pathname === '/health') return json(res, 200, { ok: true });
+    if (req.method === 'GET' && url.pathname === '/open') {
+      const repository = url.searchParams.get('repository') || '';
+      const signature = url.searchParams.get('sig') || '';
+      if (!verifyProjectOpenSignature(repository, signature)) return json(res, 403, { ok: false, error: 'invalid link' });
+      const link = resolveProjectOpenLink(repository);
+      if (!link) return json(res, 404, { ok: false, error: 'project link is not registered' });
+      res.writeHead(302, { location: link.url, 'cache-control': 'no-store', 'referrer-policy': 'no-referrer', 'x-robots-tag': 'noindex' });
+      res.end();
+      return;
+    }
     if (req.method === 'POST' && url.pathname === '/webhook/line') {
       const raw = await readBody(req);
       if (!verifyLineSignature(raw, req.headers['x-line-signature'])) return json(res, 401, { ok: false, error: 'invalid LINE signature' });
