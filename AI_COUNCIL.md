@@ -44,6 +44,8 @@ Councilは少なくとも次を確認する。
 
 ## Other triggers
 
+ユーザーが「3人でクロスチェック」または同等の明示指示をした場合は、AI Councilの明示Triggerとして扱い、Claude・Gemini・ChatGPTの3者による実際のレビューを行う。必須providerが利用不能、Credential不足、API失敗等で3者すべてのレビューを実行できない場合は、「3人でクロスチェック完了」と報告しない。
+
 Phase / Milestone完了、大きな仕様変更、累積進捗量、異常検知などをCouncil triggerへ追加する場合も、同じ3-round policyとfail-closed境界を再利用する。Triggerの実装がGitHub上で確認できるまでは「自動化済み」と扱わない。
 
 ## Secrets and external providers
