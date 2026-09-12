@@ -22,6 +22,7 @@
 16. 作業中に新しいAgent / LLM / MCP / Plugin / Connector / API等の接続または新しい能力を実アクセス・実ツール呼び出しで確認し、`CONNECT.md` が未記載または古い場合は、重複とPublic / Private境界を確認したうえで、そのSession内に短く更新する。`ai-master` へのWRITE権限がない場合は、未記載であることと追記すべき内容をユーザーへ報告する。
 17. 横断処理のスコープ確定: 「全Project」「全Repository」等の指示では、Public対象集合を実行時点の最新 `PROJECTS.md` から導出し、過去チャット・HANDOFF・AIの記憶・古い固定リストを正本にしない。Private Repositoryはユーザーの明示指定または認証済み文脈で正当に対象確定できる場合のみ別スコープとして扱う。
 18. 完了前Reconciliation: 複数Repositoryへの一括処理は、完了宣言前に最新 `PROJECTS.md` の期待対象と実際の処理実績を再照合し、未処理差分がないことを確認する。差分がある場合は完了扱いにせず、未処理分を解決または明示する。
+19. Task実行前に `Task Review Level (Lv1-Lv5)` を判定する。ユーザーが「このタスク、あなたならどうする？」または同等の質問をした場合は、実行前に推奨Lv・単独実行可否・理由・進め方を短く提示する。質問がない場合はAIが自動判定して作業を進める。判定は、影響範囲・不確実性・ロールバック容易性・Secret/認証/データ危険度を基準とし、必要最小レベルから開始してリスク発見時は上方へ自動昇格する。作業途中で新しいリスクが判明した後に、速度目的で下位Lvへ自動降格してはならない。詳細は `Task Review Level Routing` に従う。
 
 ## GLOBAL MUST NOT
 
@@ -63,6 +64,49 @@
     ADR-012）が要求する人間承認そのものは緩和しない。ハードウェア制約・規約・安全境界等の
     正当な理由がある場合はProjectローカルルールで上書きできる。詳細は `DECISIONS.md`
     ADR-015、既存のADR-013（PC電源OFF運用）を参照。
+
+## Task Review Level Routing — Lv1-Lv5
+
+目的は、低リスクTaskを不必要なMulti-Agent reviewで遅くせず、重要Taskでは単独判断を防ぐことです。人数を増やすこと自体を目的にせず、必要最小の独立検証を使います。
+
+### 判定軸
+
+Task開始前に、少なくとも次の4軸を確認する。
+
+1. **Impact** — 変更範囲と本番・ユーザーへの影響
+2. **Uncertainty** — 原因・仕様・実装方法の不確実性
+3. **Reversibility** — 安全に元へ戻せるか
+4. **Security / Data Risk** — Secret、認証、権限、課金、本番データへの影響
+
+### Levels
+
+- **Lv1 — Single Agent**: 小さい・明確・局所的・容易に戻せるTask。単純な文章変更、1行程度の表示修正、軽微なCSS、既知箇所の小修正など。能力と権限が確認できていればActive Owner単独で実行してよい。
+- **Lv2 — Owner + 1 independent check**: 小〜中規模で、代替案・原因候補・実装判断に別視点の価値があるTask。Active Ownerに加え、利用可能な別AI/Reviewerを1者だけ使う。
+- **Lv3 — 3-AI cross-check**: 原因不明の不具合、複数ファイルへ影響する変更、重要な本番機能、判断が分かれる設計など。原則としてChatGPT・Claude・Geminiが同じEvidenceを独立評価し、その後に差分だけを比較する。明示的な「3人でクロスチェック」は実Providerによるレビューを意味し、利用不能時に擬似的な3役レビューを完了扱いしてはならない。
+- **Lv4 — 3-AI + implementation/code review**: Repository構造、共通Architecture、大規模Refactor、認証/Infrastructure設計、Master governance等。Lv3に加え、Copilot等の実装・コードレビュー能力を持つ別Reviewerを追加する。特定製品を恒久固定せず、`CONNECT.md` で実利用可能な能力を確認する。
+- **Lv5 — Maximum verification**: Secret/Credential/IAM/Billing、本番データ削除、破壊的Migration、ロールバック困難な不可逆操作など。Lv4相当の独立レビューに加え、実行前チェック、復元/Recovery確認、実行後検証を必須とする。既存のHuman Gateを一切緩和せず、Human Approvalが必要な操作はレビュー完了だけで自動実行してはならない。
+
+### Automatic routing
+
+- ユーザーがLevelや人数を指定しない場合、AIが上記4軸で自動判定する。
+- 低リスクTaskを「念のため」で恒常的にLv3以上へ上げない。
+- 同時に、Active Owner自身の「自分だけでできる」という自己評価だけを根拠にLv1へ下げない。
+- 作業中に新しい危険・不確実性を発見した場合は `Lv1 → Lv2 → Lv3...` のように必要なLevelへ上げる。
+- 自動昇格後は、そのリスクが未解消のまま速度目的で自動降格しない。
+- 明示的なユーザー指定は自動判定より優先する。より高い安全Levelを指定された場合はそのLevelを使用する。
+
+### Mandatory minimum levels
+
+- 「3人でクロスチェック」「3人で話し合って」等の明示指定: **最低Lv3**
+- 「4人でクロスチェック」等の明示指定: **最低Lv4**
+- `ai-master` の `AGENTS.md` / `DECISIONS.md` / `AI_COUNCIL.md` 等、共通Governanceの根幹変更: **最低Lv4**
+- Secret / Credential / IAM / Billing / 本番データ削除 / 破壊的Migration / 復旧困難な不可逆操作: **Lv5 + 既存Human Gate**
+
+### Independence rule
+
+複数AIレビューでは、最初のAIの結論を他AIへそのまま追従させない。可能な限り同じEvidenceから独立評価を先に取り、その後で不一致・弱い仮定・リスクだけを比較する。根拠のない多数決は行わない。
+
+このRoutingは `1 Task = 1 Active Owner` を変更しない。Multi-Agentは原則としてReview / Test / Research / Alternative Proposalを担当し、同じ実装を無断で重複しない。
 
 ## Context Handoff Protocol — 40% Rule
 
