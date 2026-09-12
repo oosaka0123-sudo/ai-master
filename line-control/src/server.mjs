@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 import { buildDashboardMessages, excludeDashboardRepositories, isDashboardRequest } from './flex.mjs';
 import { runControlJob, DEFAULT_CONTROL_PROJECT, DEFAULT_CONTROL_REGION, DEFAULT_CONTROL_JOB } from './commands.mjs';
 import { issueLineAccessToken } from './lineToken.mjs';
-import { resolveProjectOpenLink, buildProjectOpenResolverUrl, verifyProjectOpenSignature } from './projectLinks.mjs';
+import { resolveProjectOpenLink, buildProjectOpenResolverUrl, buildOpenAllResolverUrl, resolveAllProjectOpenLinks, verifyProjectOpenSignature, verifyOpenAllSignature } from './projectLinks.mjs';
 
 const port = Number(process.env.PORT || 8787);
 const githubToken = process.env.CONTROL_GITHUB_TOKEN || process.env.GITHUB_TOKEN || '';
@@ -149,6 +149,7 @@ export async function getAllStatuses() {
       acc[item.signal] = (acc[item.signal] || 0) + 1;
       return acc;
     }, {}),
+    openAllUrl: buildOpenAllResolverUrl(),
     repositories: results
   };
 }
@@ -260,10 +261,27 @@ async function handleLineWebhook(raw) {
   }
 }
 
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
+}
+
+function openAllPage() {
+  const links = resolveAllProjectOpenLinks();
+  const urls = JSON.stringify(links.map(item => item.url)).replace(/</g, '\\u003c');
+  const items = links.map(item => `<li><a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.fullName)} — ${item.type === 'work' ? 'Work' : 'Chat'}</a></li>`).join('');
+  return `<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>全て開く</title><style>body{font-family:system-ui,sans-serif;max-width:720px;margin:0 auto;padding:24px;background:#f6f7f9;color:#111}button{width:100%;padding:16px;border:0;border-radius:12px;background:#06c755;color:#fff;font-size:18px;font-weight:700}ul{padding:0;list-style:none}li{margin:10px 0}a{display:block;padding:14px;background:#fff;border-radius:10px;text-decoration:none;color:#111}</style><h1>📂 全て開く</h1><p>登録済みのChat / Workをまとめて開きます。端末のポップアップ制限で一部だけ開く場合は、下の一覧から個別に開けます。</p><button id="openAll">全て開く（${links.length}件）</button><ul>${items}</ul><script>const urls=${urls};document.getElementById('openAll').addEventListener('click',()=>{urls.forEach((u,i)=>setTimeout(()=>window.open(u,'_blank','noopener,noreferrer'),i*180));});</script></html>`;
+}
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
     if (req.method === 'GET' && url.pathname === '/health') return json(res, 200, { ok: true });
+    if (req.method === 'GET' && url.pathname === '/open-all') {
+      const signature = url.searchParams.get('sig') || '';
+      if (!verifyOpenAllSignature(signature)) return json(res, 403, { ok: false, error: 'invalid link' });
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'referrer-policy': 'no-referrer', 'x-robots-tag': 'noindex' });
+      res.end(openAllPage());
+      return;
+    }
     if (req.method === 'GET' && url.pathname === '/open') {
       const repository = url.searchParams.get('repository') || '';
       const signature = url.searchParams.get('sig') || '';

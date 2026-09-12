@@ -49,3 +49,16 @@ test('runner failure alert still has refresh button', () => {
   assert.equal(messages[0].type, 'flex');
   assert.equal(messages[0].contents.footer.contents[0].action.label, '🔄 今すぐ更新');
 });
+
+
+test('summary shows global open-all button when resolver is available', () => {
+  const data = {
+    counts: { green: 1 },
+    openAllUrl: 'https://control.example/open-all?sig=test',
+    repositories: [{ name: 'demo', fullName: 'oosaka0123-sudo/demo', signal: 'green', reason: 'normal' }]
+  };
+  const footer = buildDashboardMessages(data)[0].contents.footer.contents;
+  assert.equal(footer[0].action.type, 'uri');
+  assert.equal(footer[0].action.label, '📂 全て開く');
+  assert.equal(footer[0].action.uri, data.openAllUrl);
+});
