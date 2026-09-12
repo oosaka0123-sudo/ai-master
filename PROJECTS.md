@@ -93,6 +93,15 @@ Startup:
 - Project側に独自AGENTSが存在する場合は読む
 - Open Issues / Open PRs / Latest Actions
 
+### YEARLY TRIP
+Repository: `oosaka0123-sudo/travel-site`
+
+Startup:
+- current default branchを確認
+- `README.md`
+- Repository内の実在するProjectローカルルールを読む
+- Open Issues / Open PRs / Latest Actions / current code
+
 ## Private Repositories
 
 このMasterはPublicのため、Private Repositoryの名前・存在・内部情報は明示承認なしに掲載しません。
