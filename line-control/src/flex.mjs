@@ -13,13 +13,17 @@ function postback(label, repository, command, style = 'secondary') {
   };
 }
 
-function openButton(url, type) {
+function uriButton(label, url, style = 'secondary') {
   if (!url) return null;
-  const label = type === 'work' ? '🧰 Workを開く' : '💬 Chatを開く';
   return {
-    type: 'button', style: 'secondary', height: 'sm',
+    type: 'button', style, height: 'sm',
     action: { type: 'uri', label, uri: url }
   };
+}
+
+function openButton(url, type) {
+  const label = type === 'work' ? '🧰 Workを開く' : '💬 Chatを開く';
+  return uriButton(label, url);
 }
 
 function summaryBubble(data) {
@@ -43,7 +47,8 @@ function summaryBubble(data) {
       layout: 'vertical',
       spacing: 'sm',
       contents: [
-        postback('▶ 黄色を全部進める', null, 'continue_stalled', 'primary'),
+        ...(data.openAllUrl ? [uriButton('📂 全て開く', data.openAllUrl, 'primary')] : []),
+        postback('▶ 黄色を全部進める', null, 'continue_stalled'),
         postback('🔧 赤を全部再実行', null, 'retry_failed_all'),
         postback('🔄 今すぐ更新', null, 'dashboard')
       ]
