@@ -150,3 +150,22 @@
     棚卸し結果・実装状況は各Project Repository側で管理する）。
   - 本ADRはMasterの共通原則を追加するものであり、Project固有の棚卸し表・進捗・
     実装状況をMasterへコピーしない（ADR-001/ADR-005と整合）。
+
+## ADR-016: Task Review Level Routing（Lv1-Lv5）を採用する
+
+- Status: Accepted（ユーザーの明示的な方針決定に基づく）
+- Decision:
+  - すべてのTaskを一律にMulti-Agent reviewへ回さず、Impact / Uncertainty / Reversibility / Security・Data Riskの4軸でLv1〜Lv5へRoutingする。
+  - ユーザーが「このタスク、あなたならどうする？」と聞いた場合は、実行前に推奨Level・単独実行可否・理由・進め方を提示する。質問がない場合はAIが自動判定する。
+  - Lv1はSingle Agent、Lv2はOwner + 1 independent check、Lv3は3-AI cross-check、Lv4は3-AI + implementation/code review、Lv5は最大検証とHuman Gateを組み合わせる。
+  - 自動Routingは必要最小Levelから開始し、作業中にリスクを発見した場合は上方へ昇格する。未解消リスクがある状態で速度目的の自動降格は行わない。
+  - 明示的な「3人で」「4人で」等のユーザー指定は最低Levelとして自動判定より優先する。
+  - `ai-master` の根幹Governance変更は最低Lv4、Secret / Credential / IAM / Billing / 本番データ削除 / 破壊的Migration / 復旧困難な不可逆操作はLv5とし、既存Human Gateを維持する。
+  - Multi-Agent時は、可能な限り同じEvidenceから独立評価を先に取得し、その後に差分だけを比較する。根拠のない多数決や、最初のAIへの追従を避ける。
+  - `1 Task = 1 Active Owner` は維持し、複数AIは原則としてReview / Test / Research / Alternative Proposalを担当する。
+- Reason: 簡単な更新まで毎回3者・4者で確認して遅くなる問題と、Active Ownerが「自分だけで十分」と自己判定して重要Taskを単独実行する問題を同時に防ぐため。
+- Compatibility:
+  - ADR-012のCapability-based Routing / 1 Active Ownerを維持する。
+  - ADR-014の「重要変更へ選択的に独立レビュー」を具体的なLevel判定へ拡張する。
+  - `AI_COUNCIL.md` のMandatory resume gateはFull Councilとして維持し、Task-level cross-checkと区別する。
+  - Lv5はGLOBAL MUST 14のHuman Gateを緩和しない。

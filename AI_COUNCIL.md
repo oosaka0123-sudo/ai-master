@@ -48,6 +48,17 @@ Councilは少なくとも次を確認する。
 
 Phase / Milestone完了、大きな仕様変更、累積進捗量、異常検知などをCouncil triggerへ追加する場合も、同じ3-round policyとfail-closed境界を再利用する。Triggerの実装がGitHub上で確認できるまでは「自動化済み」と扱わない。
 
+## Task-level routing integration
+
+`AGENTS.md` の `Task Review Level Routing` をAI Councilの入口判定として使う。
+
+- Lv1 / Lv2は通常、Full Councilを起動しない。
+- Lv3は3-AI cross-checkを行う。Task単位では、まず3者が同じEvidenceから独立評価し、その後に不一致・弱い仮定・重要リスクだけを比較する。
+- Lv4はLv3に加え、実装/コード観点の独立Reviewerを追加する。
+- Lv5はLv4相当に加え、実行前・Recovery・実行後検証と既存Human Gateを適用する。
+- `resume` のMandatory resume gateは従来どおり3-round policyを維持し、Task-levelのLean cross-checkで置き換えない。
+- ユーザーが明示的に「3人でクロスチェック」等を指定した場合、実ProviderのClaude・Gemini・ChatGPTによるレビューを意味する。Provider利用不能時は完了を偽装せず、その事実を報告する。
+
 ## Secrets and external providers
 
 - API Key / Token / CredentialはGitHub Secretsまたは実行環境のSecret管理だけで扱い、GitHubファイル・Issue・PR・ログへ値を保存しない。
