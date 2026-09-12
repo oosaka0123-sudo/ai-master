@@ -25,16 +25,30 @@ function envLinks(env = process.env) {
 
 function normalizeEntry(entry) {
   if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null;
-  if (entry.verified !== true || !['chat', 'work'].includes(entry.type)) return null;  const url = safeDirectConversationUrl(entry.url);
+  if (entry.verified !== true || !['chat', 'work'].includes(entry.type)) return null;
+  const url = safeDirectConversationUrl(entry.url);
   return url ? { url, type: entry.type, verified: true } : null;
 }
 
-function signRepository(fullName, secret) {
-  return crypto.createHmac('sha256', secret).update(`open:${fullName}`).digest('base64url');
+function signValue(value, secret) {
+  return crypto.createHmac('sha256', secret).update(value).digest('base64url');
+}
+
+function safeEqual(aValue, bValue) {
+  const a = Buffer.from(aValue || '');
+  const b = Buffer.from(bValue || '');
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
 export function resolveProjectOpenLink(fullName, env = process.env) {
   return normalizeEntry(envLinks(env)[fullName]);
+}
+
+export function resolveAllProjectOpenLinks(env = process.env) {
+  return Object.entries(envLinks(env))
+    .map(([fullName, entry]) => ({ fullName, link: normalizeEntry(entry) }))
+    .filter(item => item.link)
+    .map(item => ({ fullName: item.fullName, ...item.link }));
 }
 
 export function resolveProjectOpenUrl(fullName, env = process.env) {
@@ -49,7 +63,19 @@ export function buildProjectOpenResolverUrl(fullName, env = process.env) {
   try {
     const url = new URL('/open', base);
     url.searchParams.set('repository', fullName);
-    url.searchParams.set('sig', signRepository(fullName, secret));
+    url.searchParams.set('sig', signValue(`open:${fullName}`, secret));
+    return url.toString();
+  } catch { return null; }
+}
+
+export function buildOpenAllResolverUrl(env = process.env) {
+  if (!resolveAllProjectOpenLinks(env).length) return null;
+  const base = env.LINE_CONTROL_PUBLIC_URL || '';
+  const secret = env.OPEN_LINK_SIGNING_SECRET || '';
+  if (!base || !secret) return null;
+  try {
+    const url = new URL('/open-all', base);
+    url.searchParams.set('sig', signValue('open-all', secret));
     return url.toString();
   } catch { return null; }
 }
@@ -57,7 +83,11 @@ export function buildProjectOpenResolverUrl(fullName, env = process.env) {
 export function verifyProjectOpenSignature(fullName, signature, env = process.env) {
   const secret = env.OPEN_LINK_SIGNING_SECRET || '';
   if (!fullName || !secret || !signature) return false;
-  const expected = signRepository(fullName, secret);
-  const a = Buffer.from(expected); const b = Buffer.from(signature);
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
+  return safeEqual(signValue(`open:${fullName}`, secret), signature);
+}
+
+export function verifyOpenAllSignature(signature, env = process.env) {
+  const secret = env.OPEN_LINK_SIGNING_SECRET || '';
+  if (!secret || !signature) return false;
+  return safeEqual(signValue('open-all', secret), signature);
 }
