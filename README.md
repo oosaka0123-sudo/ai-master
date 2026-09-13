@@ -16,13 +16,15 @@
 6. Open Issues / Open PRs / Latest Actions / current codeを確認
 7. 作業開始
 
+Web制作案件では、実装・レビュー方針の共通基準として `WEB_DEVELOPMENT.md` も参照します。
+
 一度停止したProjectを `resume` する場合は、作業再開前に `AI_COUNCIL.md` を読み、Claude・Gemini・ChatGPTの3-round Council gateを通します。Council実行エンジンの正本は `oosaka0123-sudo/ai-development-orchestrator` です。
 
 `CONNECT.md` は接続状態を確認するときだけ、`AI_COUNCIL.md` は停止Projectの再開・Council triggerを扱うときだけ、`DECISIONS.md` はMaster設計の理由を確認するときだけ読みます。最初から全ファイルを一括ロードしません。
 
 ## Source of Truth
 
-- **Master**: 共通安全ルール、共通運用原則、Repositoryへの案内、接続状態、AI Council共通ポリシー
+- **Master**: 共通安全ルール、共通運用原則、Repositoryへの案内、接続状態、AI Council共通ポリシー、Web制作共通標準
 - **Project Repository**: Project固有の仕様、コード、Issue、PR、CI、実装状態、設計判断
 - **チャット履歴 / LLMの記憶**: 参考情報。正本ではない
 
@@ -36,8 +38,9 @@ MasterへProject固有の進捗や仕様、Council結果をコピーしません
 2. **Project固有の仕様・コード・実装状態**: 対象Project Repositoryが正本です。
 3. **AI Council resume policy**: `AI_COUNCIL.md` を正本とし、停止Projectの `resume` はCouncil未完了のまま実装へ進めません。
 4. **Projectローカル運用ルール**: Project側 `AGENTS.md` 等が、Masterの `DEFAULT` をそのProject内だけ上書きできます。ただし上位Securityルールや必須resume gateは緩められません。
-5. **現在状態**: current code / Issue / PR / Actions等のGitHub実態を優先し、古い文書は修正対象として扱います。
-6. **過去チャット・LLMの記憶**: GitHubと矛盾する場合は採用しません。
+5. **Web制作共通標準**: Web案件では `WEB_DEVELOPMENT.md` を共通基準として扱います。Project固有要件が異なる場合は、そのProject内で明示的に上書きします。
+6. **現在状態**: current code / Issue / PR / Actions等のGitHub実態を優先し、古い文書は修正対象として扱います。
+7. **過去チャット・LLMの記憶**: GitHubと矛盾する場合は採用しません。
 
 重大な矛盾で安全に解決できない場合は、差分を明示して人間へエスカレーションします。
 
@@ -49,6 +52,7 @@ MasterへProject固有の進捗や仕様、Council結果をコピーしません
 - `CONNECT.md` — 接続状態・確認済み能力のみ
 - `PROJECTS.md` — 公開Project Repositoryの住所録のみ
 - `DECISIONS.md` — Master設計判断の理由（ADR）。日常命令の正本ではない
+- `WEB_DEVELOPMENT.md` — 全Web制作案件の共通制作・品質・レビュー標準
 
 ## Deliberately Not Created
 
