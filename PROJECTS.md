@@ -102,6 +102,16 @@ Startup:
 - Repository内の実在するProjectローカルルールを読む
 - Open Issues / Open PRs / Latest Actions / current code
 
+### 現場資格ラボ
+Repository: `oosaka0123-sudo/genba-shikaku-lab`
+
+Startup:
+- current default branchを確認
+- `README.md`
+- `HANDOFF.md`
+- Repository内の実在するProjectローカルルールを読む
+- Open Issues / Open PRs / Latest Actions / current code
+
 ## Private Repositories
 
 このMasterはPublicのため、Private Repositoryの名前・存在・内部情報は明示承認なしに掲載しません。
