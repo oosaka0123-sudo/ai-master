@@ -218,15 +218,32 @@ Important limitation observed:
 Rule:
 - 新しいCodex sessionでは、対象RepositoryのREAD / WRITE / PR作成能力を実アクセスで再確認します。
 
-## Gemini
+## Gemini / Antigravity CLI
 
-Status: `VERIFY_ON_START`
+Type: Local CLI / model access path
+
+Status: `CONNECTED / VERIFY_ON_START`（device-scoped evidence）
+
+Last verified: 2026-09-20 JST
 
 GeminiはJulesとは別枠で扱います。
 
-Current rule:
-- Projectごとに連携方式が異なる可能性があるため、Masterでは全Project共通の接続済み状態を宣言しません。
-- Gemini単体のGitHub READ / WRITE、Actions、MCP利用等は、必要なProjectで実際に確認してから追記します。
+Verified scope:
+- Windows端末 `ks-pc02` 上で Antigravity CLI `agy` の実行を確認
+- `agy --version` で version `1.2.7` を確認
+- `agy models` で Gemini 3.1 Pro / Gemini 3.8 Flash 系、および Claude Sonnet 4.6 / Claude Opus 4.6 Thinking 等の利用可能モデル一覧取得に成功
+- `agy --model gemini-3.1-pro-high --print ...` による実プロンプト呼び出しに成功し、日本語応答を確認
+- 現行の個人向け運用では旧 `gemini` CLIより Antigravity CLI `agy` を優先する
+
+Operational rule:
+- ChatGPTからRemote Desktop Commander経由で `ks-pc02` の `agy` を呼び出し、Geminiを実Providerとして利用できる
+- 3人クロスチェック時は、ChatGPT内の擬似的な3視点ではなく、Claude・Gemini・ChatGPTの実Providerを実際に呼び出す
+- Antigravity CLI上でClaudeモデルを利用できる場合でも、ClaudeとGeminiは別Provider回答として個別に取得・比較する
+- 新しいdevice/sessionでは `agy models` と短い実プロンプトで `VERIFY_ON_START` を行う
+- Secret / Token / Credential / account identifierはMasterへ保存しない
+
+Current limitation:
+- Gemini単体のGitHub READ / WRITE、Actions、MCP利用等は、必要なProjectで実際に確認してから追記する。
 
 ## Google Media Remote HTTP MCP
 

@@ -46,6 +46,14 @@ Councilは少なくとも次を確認する。
 
 ユーザーが「3人でクロスチェック」または同等の明示指示をした場合は、AI Councilの明示Triggerとして扱い、Claude・Gemini・ChatGPTの3者による実際のレビューを行う。必須providerが利用不能、Credential不足、API失敗等で3者すべてのレビューを実行できない場合は、「3人でクロスチェック完了」と報告しない。
 
+### Antigravity CLI routing
+
+- `ks-pc02` で Antigravity CLI `agy` が利用可能な場合、Geminiレビューは `agy` 経由の実モデル呼び出しを優先する。
+- 利用可能モデル確認は `agy models`、Geminiの疎通確認は短い `--print` 実行で行う。
+- 旧 `gemini` CLIが `UNSUPPORTED_CLIENT` 等で利用不能でも、`agy` が実動作していればGemini providerは利用可能として扱える。
+- Claudeレビューについても、Antigravity CLI上のClaudeモデルを使う場合は実際にClaudeモデルを指定して独立回答を取得する。ChatGPTがClaude視点を代筆してはならない。
+- 3者の回答は同じ依頼文・同じEvidenceを基準に比較し、不一致点を明示してから統合判断する。
+
 Phase / Milestone完了、大きな仕様変更、累積進捗量、異常検知などをCouncil triggerへ追加する場合も、同じ3-round policyとfail-closed境界を再利用する。Triggerの実装がGitHub上で確認できるまでは「自動化済み」と扱わない。
 
 ## Task-level routing integration
