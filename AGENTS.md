@@ -64,6 +64,7 @@
     ADR-012）が要求する人間承認そのものは緩和しない。ハードウェア制約・規約・安全境界等の
     正当な理由がある場合はProjectローカルルールで上書きできる。詳細は `DECISIONS.md`
     ADR-015、既存のADR-013（PC電源OFF運用）を参照。
+14. **Remote Desktop Commander fallback**: Remote Desktop Commander が利用不能・未接続・不安定で、Windows端末へのリモートCLI操作が必要な場合は、代替経路として **Tailscale + Windows OpenSSH** を優先する。使用前に対象端末のTailscale接続、OpenSSH稼働、認証・到達性を実確認し、未確認の接続を `CONNECTED` と扱わない。Cloud Firstで代替できる処理は、引き続きGitHub Actions / Remote HTTP MCP等のクラウド経路を優先する。
 
 ## Task Review Level Routing — Lv1-Lv5
 
