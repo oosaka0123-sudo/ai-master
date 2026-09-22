@@ -130,6 +130,16 @@ Startup:
 - Repository内の実在するProjectローカルルールを読む
 - Open Issues / Open PRs / Latest Actions / current code
 
+### Astro Web Starter
+Repository: `oosaka0123-sudo/astro-web-starter`
+
+Startup:
+- current default branchを確認
+- `AGENTS.md`
+- `README.md`
+- `ai-master/WEB_DEVELOPMENT.md`
+- Open Issues / Open PRs / Latest Actions / current code
+
 ## Private Repositories
 
 このMasterはPublicのため、Private Repositoryの名前・存在・内部情報は明示承認なしに掲載しません。
