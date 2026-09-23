@@ -16,7 +16,7 @@
 6. Open Issues / Open PRs / Latest Actions / current codeを確認
 7. 作業開始
 
-Web制作案件では、実装・レビュー方針の共通基準として `WEB_DEVELOPMENT.md` も参照します。
+Web制作案件では、実装・レビュー方針の共通基準として `WEB_DEVELOPMENT.md` も参照します。コンテンツ中心の新規Web Projectは、原則として共通Template `oosaka0123-sudo/astro-web-starter` から開始します。
 
 一度停止したProjectを `resume` する場合は、作業再開前に `AI_COUNCIL.md` を読み、Claude・Gemini・ChatGPTの3-round Council gateを通します。Council実行エンジンの正本は `oosaka0123-sudo/ai-development-orchestrator` です。
 
