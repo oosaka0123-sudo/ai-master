@@ -662,7 +662,37 @@ Masterは共通原則、Projectは実態、GitHubは現在状態の正本とす�
 
 ---
 
-## 25. 最重要原則
+## 25. 新規Web Projectの標準起動
+
+コンテンツ中心の新規Web Projectは、要件上の明確な理由がない限り、共通Template Repository:
+
+`oosaka0123-sudo/astro-web-starter`
+
+から開始する。
+
+### 標準フロー
+
+1. Templateから新規Repositoryを作成
+2. Project側README / AGENTSをProject要件へ調整
+3. `.env.example` を基に環境変数を設定
+4. `src/config/site.ts` のサイト情報を変更
+5. Static / SSR境界をProject側へ記録
+6. Content Collections schemaをProjectの反復コンテンツへ合わせる
+7. Design / Content / APIを実装
+8. `npm run check`
+9. `npm run build`
+10. PreviewでPC / Mobileを確認
+11. PR / Review / CI
+12. Deploy後に公開URLを確認
+
+Starterは土台であり、完成デザインの固定Templateではない。
+Project固有のブランド、情報設計、UI、データ、Hosting要件に合わせて変更する。
+
+Starter側の改善は、特定Projectへだけ必要な仕様を持ち込まず、複数Projectで再利用できる共通改善だけを反映する。
+
+---
+
+## 26. 最重要原則
 
 Astroを採用する目的は「Astroを使うこと」ではない。
 
