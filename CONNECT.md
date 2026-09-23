@@ -1,6 +1,6 @@
 # CONNECT.md — AI MASTER Connection Registry
 
-Last verified: 2026-09-09 JST
+Last verified: 2026-09-24 JST
 
 このファイルは **接続状態と実確認できた能力だけ** を管理します。
 
@@ -91,22 +91,49 @@ Limitations:
 
 Type: Browser Connector / Plugin
 
-Status: `CONNECTED / READ`
+Status: `CONNECTED / READ / VERIFY_ON_START`
 
-Verified: 2026-09-05 JST
+Last verified: 2026-09-24 JST
+
+Verified environment:
+- Device: `ks-pc02`
+- Opera Browser Connector: v5.2.0
+- Extension ID: `fnjbijbhcehgoglobkicibfpcmddlggg`
 
 Verified capabilities:
-- Opera Browser ConnectorのインストールとChatGPT接続
 - ChatGPTからOperaで開いているタブ一覧の実読み取り
 - タブID・タイトル・URL・active状態の取得
+- 通常Webページのaccessibility tree / 本文 / heading / button / link構造の実読み取り
+- Browser Connector経由でChatGPTがOperaへlive接続できることを確認
 
-Not yet claimed:
-- ページ内容読み取り、スクリーンショット取得、ページ移動等は機能として提供されているが、このMaster更新時点では個別のlive成功Evidenceをまだ固定しない。
+Connection / recovery procedure:
+1. `ks-pc02` でOperaが起動していることを確認する。
+2. Operaに `Browser Connector` 拡張が入っていることを確認する。
+3. Browser Connectorで `Allow AI connection` を有効にする。
+4. 必要に応じてOperaアカウントへサインインする。
+5. ChatGPT側からOpera Browser Connectorのタブ一覧取得を実行する。
+6. `Browser not connected` の場合は、Browser Connectorの拡張画面を開いて接続を再初期化する。
+7. 02で直接開く場合は、Operaで次の拡張ページを開ける:
+   `chrome-extension://fnjbijbhcehgoglobkicibfpcmddlggg/src/popup/index.html`
+8. 接続後、ChatGPTからタブ一覧取得が成功することを確認する。
+9. 仕上げとして任意の通常ページで本文・リンク構造の読み取りを実行し、live接続を確認する。
+
+Observed recovery evidence:
+- 2026-09-24 JST、初回はChatGPT側で `Browser not connected`。
+- `ks-pc02` 上でBrowser Connector v5.2.0の存在を確認。
+- 拡張ページをOperaで開いた後、ChatGPTからタブ一覧取得が成功。
+- 続けて通常Webページの本文・リンク構造読み取りにも成功。
+
+Operational note:
+- ChatGPTからOperaのWeb作業を開始する前に、まずタブ一覧のread-only probeで接続確認する。
+- 接続断時は、再インストールより先に `Allow AI connection`、Operaログイン状態、拡張画面の再オープンを確認する。
+- Claude / GeminiのCLIクロスチェックが応答待ちになる場合でも、Browser Connector自身のlive readで接続可否を判定できる。
 
 Rule:
 - ブラウザで扱う情報は、ユーザーが許可したタブとタスク範囲に限定する。
 - 閲覧履歴、認証情報、Cookie、個人情報はMasterへ保存しない。
-- 新しいセッションでは必要に応じて `VERIFY_ON_START` として再確認する。
+- Operaアカウント情報、token、credential等の秘密値は保存しない。
+- 新しいセッションでは `VERIFY_ON_START` とし、タブ一覧取得などのread-only probeで再確認する。
 
 ## ChatGPT → Remote Desktop Commander → Google Cloud CLI
 
