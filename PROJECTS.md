@@ -130,6 +130,16 @@ Startup:
 - Repository内の実在するProjectローカルルールを読む
 - Open Issues / Open PRs / Latest Actions / current code
 
+### 大人のスマホAI生活
+Repository: `oosaka0123-sudo/otona-smart-ai`
+
+Startup:
+- current default branchを確認
+- `README.md`
+- Repository内の実在するProjectローカルルールを読む
+- `ai-master/WEB_DEVELOPMENT.md`
+- Open Issues / Open PRs / Latest Actions / current code
+
 ### Astro Web Starter
 Repository: `oosaka0123-sudo/astro-web-starter`
 
