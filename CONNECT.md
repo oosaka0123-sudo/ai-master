@@ -1,6 +1,6 @@
 # CONNECT.md — AI MASTER Connection Registry
 
-Last verified: 2026-09-24 JST
+Last verified: 2026-09-25 JST
 
 このファイルは **接続状態と実確認できた能力だけ** を管理します。
 
@@ -123,6 +123,7 @@ Observed recovery evidence:
 - `ks-pc02` 上でBrowser Connector v5.2.0の存在を確認。
 - 拡張ページをOperaで開いた後、ChatGPTからタブ一覧取得が成功。
 - 続けて通常Webページの本文・リンク構造読み取りにも成功。
+- 2026-09-25 JST、再び `Browser not connected` を確認後、Master手順どおりOpera起動・拡張ページ再オープンを行い、ChatGPTからタブ一覧取得とGoogle Play Consoleのaccessibility tree読み取りまで復旧を実確認。
 
 Operational note:
 - ChatGPTからOperaのWeb作業を開始する前に、まずタブ一覧のread-only probeで接続確認する。
