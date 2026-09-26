@@ -172,6 +172,17 @@ Startup:
 - `ai-master/WEB_DEVELOPMENT.md`
 - Open Issues / Open PRs / Latest Actions / current code
 
+### SURFBOARD FINDER
+Repository: `oosaka0123-sudo/surfboard`
+
+Startup:
+- current default branchを確認
+- `README.md`
+- `AGENTS.md`
+- `PROJECT_SPEC.md`
+- `ai-master/WEB_DEVELOPMENT.md`
+- Open Issues / Open PRs / Latest Actions / current code
+
 ## Private Repositories
 
 このMasterはPublicのため、Private Repositoryの名前・存在・内部情報は明示承認なしに掲載しません。
