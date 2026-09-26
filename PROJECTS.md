@@ -162,6 +162,16 @@ Startup:
 - `ai-master/WEB_DEVELOPMENT.md`
 - Open Issues / Open PRs / Latest Actions / current code
 
+### キャンプ道具の十年
+Repository: `oosaka0123-sudo/camp-dougu-no-junen`
+
+Startup:
+- current default branchを確認
+- `README.md`
+- `AGENTS.md`
+- `ai-master/WEB_DEVELOPMENT.md`
+- Open Issues / Open PRs / Latest Actions / current code
+
 ## Private Repositories
 
 このMasterはPublicのため、Private Repositoryの名前・存在・内部情報は明示承認なしに掲載しません。
