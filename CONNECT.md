@@ -91,7 +91,7 @@ Limitations:
 
 Type: Browser Connector / Plugin
 
-Status: `DISCONNECTED / VERIFY_ON_START`
+Status: `CONNECTED / READ / VERIFY_ON_START`
 
 Last verified: 2026-09-26 JST
 
@@ -126,10 +126,10 @@ Observed recovery evidence:
 - 2026-09-25 JST、再び `Browser not connected` を確認後、Master手順どおりOpera起動・拡張ページ再オープンを行い、ChatGPTからタブ一覧取得とGoogle Play Consoleのaccessibility tree読み取りまで復旧を実確認。
 
 Observed current state:
-- 2026-09-26 JST、ChatGPTからのタブ一覧取得で再度 `Browser not connected` を実確認。
-- `ks-pc02` 上のOpera起動は確認済み。
-- Master記載の拡張ページ `chrome-extension://fnjbijbhcehgoglobkicibfpcmddlggg/src/popup/index.html` をRemote Desktop Commander経由で開くところまで実施。
-- 現在の残作業はOpera側で `Allow AI connection` を有効化し、その後タブ一覧取得を再試行すること。
+- 2026-09-26 JST、いったん `Browser not connected` を再現。
+- `ks-pc02` 上のOpera起動、Operaアカウントのサインイン状態、`connector.mcp.opera.com` へのDNS/HTTPS到達を確認。
+- Browser Connector画面で接続トグルをOFF→ON後、ChatGPTからOperaのタブ一覧取得が再び成功し、live接続の復旧を実確認。
+- 通常ページの本文読み取りは、今回一部タブでready timeoutが出たため、必要な作業開始時に対象タブで再確認する。
 
 Operational note:
 - ChatGPTからOperaのWeb作業を開始する前に、まずタブ一覧のread-only probeで接続確認する。
