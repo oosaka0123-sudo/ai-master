@@ -1,6 +1,6 @@
 # CONNECT.md — AI MASTER Connection Registry
 
-Last verified: 2026-09-25 JST
+Last verified: 2026-09-27 JST
 
 このファイルは **接続状態と実確認できた能力だけ** を管理します。
 
@@ -141,6 +141,41 @@ Rule:
 - 閲覧履歴、認証情報、Cookie、個人情報はMasterへ保存しない。
 - Operaアカウント情報、token、credential等の秘密値は保存しない。
 - 新しいセッションでは `VERIFY_ON_START` とし、タブ一覧取得などのread-only probeで再確認する。
+
+### 2026-09-27 ks-pc02 recovery / tab-growth note
+
+Observed:
+- After a ks-pc02 reboot, Remote Desktop Commander returned online and ChatGPT ping succeeded.
+- Tailscale service was verified `Running / Automatic`; `tailscale status` showed ks-pc02 online.
+- Windows OpenSSH `sshd` was verified `Running / Automatic`.
+- Claude CLI, Gemini CLI, and Antigravity CLI `agy` commands were present on ks-pc02.
+- Real Gemini review succeeded through `agy --model gemini-3.1-pro-high`; real Claude-provider review succeeded through the Claude Sonnet model exposed by `agy`.
+- Opera Browser Connector v5.2.0 could recover when its extension page was opened and ChatGPT `list_tabs` was retried.
+
+Important failure mode:
+- Repeatedly opening the Browser Connector extension page as a periodic recovery action caused many duplicate Opera tabs.
+- Therefore, **do not use a watchdog that opens a new Browser Connector tab every polling interval**.
+- A Browser Connector recovery action must be edge-triggered, not periodic tab creation.
+
+Current recovery rule:
+1. First verify ks-pc02 itself through Remote Desktop Commander.
+2. Verify Tailscale / `sshd` health without changing them when already healthy.
+3. Probe Opera Browser Connector with a read-only `list_tabs` call.
+4. If the connector is unavailable, do not repeatedly spawn extension tabs.
+5. Prefer one controlled Opera restart and open the Browser Connector extension page **once**.
+6. Re-run `list_tabs`; after recovery keep only one Browser Connector tab.
+7. If duplicate-tab growth is already severe, preserve the Opera session files before clearing the current session; do not delete cookies, saved logins, history, or credentials as part of tab cleanup.
+8. Never claim automatic recovery succeeded until `list_tabs` succeeds from ChatGPT.
+
+ks-pc02 local recovery files observed in this session:
+- `C:\Users\oosak\Documents\ks-pc02\remote-watchdog.ps1`
+- `C:\Users\oosak\Documents\ks-pc02\remote-watchdog-loop.ps1`
+- `C:\Users\oosak\Documents\ks-pc02\opera-connector-health.py`
+
+Local watchdog policy:
+- It may restart Remote Desktop Commander, Tailscale, sshd, or Opera when those processes/services are actually down.
+- It must **not** create Browser Connector tabs on every 5-minute loop.
+- Browser Connector platform-session health cannot be proven solely from Opera local state; final verification must come from an external Browser Connector probe such as ChatGPT `list_tabs`.
 
 ## ChatGPT → Remote Desktop Commander → Google Cloud CLI
 
