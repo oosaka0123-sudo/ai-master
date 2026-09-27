@@ -167,10 +167,10 @@ Current recovery rule:
 7. If duplicate-tab growth is already severe, preserve the Opera session files before clearing the current session; do not delete cookies, saved logins, history, or credentials as part of tab cleanup.
 8. Never claim automatic recovery succeeded until `list_tabs` succeeds from ChatGPT.
 
-ks-pc02 local recovery files observed in this session:
-- `C:\Users\oosak\Documents\ks-pc02\remote-watchdog.ps1`
-- `C:\Users\oosak\Documents\ks-pc02\remote-watchdog-loop.ps1`
-- `C:\Users\oosak\Documents\ks-pc02\opera-connector-health.py`
+ks-pc02 local recovery components observed in this session:
+- Local remote watchdog script
+- Local watchdog loop script
+- Local Opera Connector health-check helper
 
 Local watchdog policy:
 - It may restart Remote Desktop Commander, Tailscale, sshd, or Opera when those processes/services are actually down.
