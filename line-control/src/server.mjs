@@ -3,12 +3,19 @@ import crypto from 'node:crypto';
 import { buildDashboardMessages, excludeDashboardRepositories, isDashboardRequest } from './flex.mjs';
 import { runControlJob, DEFAULT_CONTROL_PROJECT, DEFAULT_CONTROL_REGION, DEFAULT_CONTROL_JOB } from './commands.mjs';
 import { issueLineAccessToken } from './lineToken.mjs';
+import { createGitHubAppTokenProvider } from './githubAuth.mjs';
 import { resolveProjectOpenLink, buildProjectOpenResolverUrl, buildOpenAllResolverUrl, resolveAllProjectOpenLinks, verifyProjectOpenSignature, verifyOpenAllSignature } from './projectLinks.mjs';
 
 const port = Number(process.env.PORT || 8787);
-const githubToken = process.env.CONTROL_GITHUB_TOKEN || process.env.GITHUB_TOKEN || '';
+const staticGithubToken = process.env.CONTROL_GITHUB_TOKEN || process.env.GITHUB_TOKEN || '';
 const githubApiMode = process.env.GITHUB_API_MODE || 'user';
+const githubAppId = process.env.GITHUB_APP_ID || '';
+const githubInstallationId = process.env.GITHUB_INSTALLATION_ID || '';
+const githubAppPrivateKey = process.env.GITHUB_APP_PRIVATE_KEY || '';
 const ownerFilter = process.env.GITHUB_OWNER || '';
+const githubAppTokenProvider = githubApiMode === 'installation'
+  ? createGitHubAppTokenProvider({ appId: githubAppId, installationId: githubInstallationId, privateKey: githubAppPrivateKey })
+  : null;
 const stalledMinutes = Number(process.env.STALLED_MINUTES || 45);
 const lineChannelSecret = process.env.LINE_CHANNEL_SECRET || '';
 const lineChannelId = process.env.LINE_CHANNEL_ID || '';
@@ -32,21 +39,33 @@ async function readBody(req) {
   return Buffer.concat(chunks);
 }
 
-function ghHeaders() {
-  if (!githubToken) throw new Error('CONTROL_GITHUB_TOKEN is not configured');
+async function githubToken({ force = false } = {}) {
+  if (githubApiMode === 'installation') {
+    if (!githubAppTokenProvider) throw new Error('GitHub App authentication is not configured');
+    return githubAppTokenProvider.getToken({ force });
+  }
+  if (!staticGithubToken) throw new Error('CONTROL_GITHUB_TOKEN is not configured');
+  return staticGithubToken;
+}
+
+async function ghHeaders(forceRefresh = false) {
   return {
-    authorization: `Bearer ${githubToken}`,
+    authorization: `Bearer ${await githubToken({ force: forceRefresh })}`,
     accept: 'application/vnd.github+json',
     'x-github-api-version': '2022-11-28',
     'user-agent': 'ai-master-line-control'
   };
 }
 
-async function gh(url, options = {}) {
+async function gh(url, options = {}, retried = false) {
   const response = await fetch(`https://api.github.com${url}`, {
     ...options,
-    headers: { ...ghHeaders(), ...(options.headers || {}) }
+    headers: { ...await ghHeaders(retried), ...(options.headers || {}) }
   });
+  if (response.status === 401 && githubApiMode === 'installation' && !retried) {
+    githubAppTokenProvider?.clear();
+    return gh(url, options, true);
+  }
   if (!response.ok) {
     const text = await response.text();
     throw new Error(`GitHub ${response.status}: ${text.slice(0, 300)}`);

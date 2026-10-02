@@ -31,8 +31,10 @@ GitHubを正本のまま、LINEから複数Projectの状態確認・再開操作
 ## 必要な環境変数
 
 ```text
-CONTROL_GITHUB_TOKEN=...
-GITHUB_API_MODE=user
+GITHUB_API_MODE=installation
+GITHUB_APP_ID=...
+GITHUB_INSTALLATION_ID=...
+GITHUB_APP_PRIVATE_KEY=...  # Secret Managerから注入
 GITHUB_OWNER=oosaka0123-sudo
 CONTROL_JOB_PROJECT=rss7-ai-orchestrator
 CONTROL_JOB_REGION=asia-northeast1
@@ -48,11 +50,11 @@ LINE_ALLOWED_USER_IDS=Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 複数人を許可する場合は `LINE_ALLOWED_USER_IDS` をカンマ区切りにします。長期Channel Access Tokenは保存せず、Channel ID + Secretから15分有効のstateless tokenを送信時に発行します。
 
-### CONTROL_GITHUB_TOKEN
+### GitHub App認証
 
-推奨は専用GitHub Appまたは必要最小権限のfine-grained tokenです。Repository一覧/metadata/Issues/PR/Actionsの読み取りと、対象Projectの失敗Actions再実行に必要な権限を持たせます。再開Jobの起動はGoogle Cloudのサービスアカウント権限で行います。
+本番は長期PATを使わず、専用GitHub Appから短期Installation Tokenを自動発行します。Private keyはSecret Managerだけに保存し、発行トークンはプロセスメモリだけで保持します。期限5分前に自動更新し、GitHub APIが401を返した場合は1回だけ強制再発行して再試行します。
 
-SecretはRepositoryファイル、Issue、PR本文へ書かず、デプロイ先のSecret/Environment Variablesへ保存してください。
+`CONTROL_GITHUB_TOKEN` は移行・緊急ロールバック用の互換経路だけに残し、本番の通常運用では設定しません。再開Jobの起動はGoogle Cloudのサービスアカウント権限で行います。
 
 ## 起動
 
