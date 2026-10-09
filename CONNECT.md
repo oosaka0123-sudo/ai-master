@@ -318,10 +318,11 @@ Status: `CONNECTED / VERIFY_ON_START`（device-scoped evidence）
 
 Last verified: 2026-10-09 JST
 
-GeminiはJulesとは別枠で扱います.
+GeminiはJulesとは別枠で扱います。
 
 Verified scope:
 - Windows端末 `ks-pc02` 上で Antigravity CLI `agy` の実行を確認
+- `ks-pc02` で `agy --version` version `1.2.7` を確認（過去Evidence）
 - Windows端末 `ks-03` 上でも Antigravity CLI `agy` の実行を確認（2026-10-09 JST）
 - `ks-03` で `agy --version` version `1.3.2` を確認
 - `agy models` で Gemini 3.1 Pro / Gemini 3.8 Flash 系、および Claude Sonnet 4.6 / Claude Opus 4.6 Thinking 等の利用可能モデル一覧取得に成功
