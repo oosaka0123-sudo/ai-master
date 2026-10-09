@@ -218,6 +218,7 @@ Operational notes:
 - Tailscale / `sshd` はsystem serviceとしてuser sign-in前に起動可能だが、Desktop Commander、AI CLI daemon、ChatGPT等のuser-session項目はWindows sign-in後に起動する。
 - 新しいsessionではRemote Desktop CommanderまたはTailscale + OpenSSH経路をread-only probeから再確認する。
 - Token / Credential / account identifier / local secretはMasterへ保存しない。
+- Local executionの優先順位は接続Evidenceではなく `DECISIONS.md` ADR-017 / `AGENTS.md` が定義する。`CONNECT.md` は能力と接続状態のEvidence registryとして扱う。
 
 ## Claude Code → GitHub
 
