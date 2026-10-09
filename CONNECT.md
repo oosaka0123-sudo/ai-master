@@ -1,6 +1,6 @@
 # CONNECT.md — AI MASTER Connection Registry
 
-Last verified: 2026-09-27 JST
+Last verified: 2026-10-09 JST
 
 このファイルは **接続状態と実確認できた能力だけ** を管理します。
 
@@ -196,6 +196,29 @@ Current interpretation:
 - 新しいdevice/sessionでは接続、端末権限、`gcloud` authentication/configurationを `VERIFY_ON_START` として再確認する。
 - Secret / Token / Credential / local user path等はMasterへ記録しない。
 
+## ChatGPT → Remote Desktop Commander → ks-03
+
+Type: Remote computer bridge / 24x7 Windows development node
+
+Status: `CONNECTED / READ / WRITE / VERIFY_ON_START`（device-scoped evidence）
+
+Verified: 2026-10-09 JST
+
+Verified scope / capabilities:
+- ChatGPTからRemote Desktop Commander経由で `ks-03` へのlive接続、PowerShell command実行、file read / writeを確認
+- Tailscale serviceとWindows OpenSSH `sshd` が `Running / Automatic` であることを確認
+- GitHub CLIの認証とRepository一覧取得、Git HTTPS `ls-remote` を実確認
+- Claude Codeの認証と実プロンプト応答を確認
+- Antigravity CLI `agy` version `1.3.2` とGemini実プロンプト応答を確認
+- Google Cloud CLIの認証とFirebase CLIからのProject accessを確認
+- Desktop Commander / 24x7 Guard / local watchdog / Antigravity remote-control daemonのuser-session起動を実確認
+
+Operational notes:
+- Windows自動ログインは設定していない。再起動後はWindows sign-in画面で停止してよい。
+- Tailscale / `sshd` はsystem serviceとしてuser sign-in前に起動可能だが、Desktop Commander、AI CLI daemon、ChatGPT等のuser-session項目はWindows sign-in後に起動する。
+- 新しいsessionではRemote Desktop CommanderまたはTailscale + OpenSSH経路をread-only probeから再確認する。
+- Token / Credential / account identifier / local secretはMasterへ保存しない。
+
 ## Claude Code → GitHub
 
 Status: `CONNECTED / READ / WRITE`（Project-scoped evidence）
@@ -293,19 +316,20 @@ Type: Local CLI / model access path
 
 Status: `CONNECTED / VERIFY_ON_START`（device-scoped evidence）
 
-Last verified: 2026-09-20 JST
+Last verified: 2026-10-09 JST
 
-GeminiはJulesとは別枠で扱います。
+GeminiはJulesとは別枠で扱います.
 
 Verified scope:
 - Windows端末 `ks-pc02` 上で Antigravity CLI `agy` の実行を確認
-- `agy --version` で version `1.2.7` を確認
+- Windows端末 `ks-03` 上でも Antigravity CLI `agy` の実行を確認（2026-10-09 JST）
+- `ks-03` で `agy --version` version `1.3.2` を確認
 - `agy models` で Gemini 3.1 Pro / Gemini 3.8 Flash 系、および Claude Sonnet 4.6 / Claude Opus 4.6 Thinking 等の利用可能モデル一覧取得に成功
 - `agy --model gemini-3.1-pro-high --print ...` による実プロンプト呼び出しに成功し、日本語応答を確認
 - 現行の個人向け運用では旧 `gemini` CLIより Antigravity CLI `agy` を優先する
 
 Operational rule:
-- ChatGPTからRemote Desktop Commander経由で `ks-pc02` の `agy` を呼び出し、Geminiを実Providerとして利用できる
+- ChatGPTからRemote Desktop Commander経由で、そのsessionでlive確認済みの `ks-pc02` または `ks-03` の `agy` を呼び出し、Geminiを実Providerとして利用できる
 - 3人クロスチェック時は、ChatGPT内の擬似的な3視点ではなく、Claude・Gemini・ChatGPTの実Providerを実際に呼び出す
 - Antigravity CLI上でClaudeモデルを利用できる場合でも、ClaudeとGeminiは別Provider回答として個別に取得・比較する
 - 新しいdevice/sessionでは `agy models` と短い実プロンプトで `VERIFY_ON_START` を行う
