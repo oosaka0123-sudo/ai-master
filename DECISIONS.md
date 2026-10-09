@@ -190,3 +190,15 @@
   - `AI_COUNCIL.md` のmandatory resume gateとfail-closed条件を緩和しない。
 - Re-evaluation trigger:
   - `ks-03` の接続・能力が継続的にlive verificationを通らない、端末構成が大きく変わる、または別端末がPrimary Local Nodeとして明らかに適する状態になった場合は、本ADRと `CONNECT.md` を再評価する。
+
+## ADR-018: rootは必須ガバナンスに絞り、詳細文書はdocsへ配置する
+
+- Status: Accepted（2026-10-10、ユーザーの整理指示と3-AIレビューに基づく）
+- Decision:
+  - ADR-002の基本5ファイル（README / AGENTS / CONNECT / PROJECTS / DECISIONS）と、必須Council gateのAI_COUNCILはrootに維持する。
+  - 複数Projectで使う詳細標準は `docs/standards/`、端末・運用のスナップショットや引き継ぎ記録は `docs/operations/` に置く。
+  - root READMEは入口・読み込み順・SSOT・優先順位・Public/Private境界に集中させ、詳細説明を重複させない。
+  - 文書移動時はRepository内参照を同一変更で修復し、壊れたlocal linkを残さない。外部Repositoryに旧path参照が残る場合は、移行完了まで最小限の互換shimをrootに置いてよい。
+  - 意図的に廃止された文書を指すstale stubは残さず、Git historyと現行方針が一致する状態にする。
+- Reason: rootのファイル数と初期コンテキストを抑え、AIと人間が入口を素早く理解できる状態を維持しつつ、SSOTと既存automation互換性を守るため。
+- Compatibility: CONNECT / PROJECTS / DECISIONSのroot path、AGENTS New Session Protocol、AI_COUNCIL resume gateは変更しない。

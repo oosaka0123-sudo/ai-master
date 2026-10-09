@@ -137,7 +137,7 @@ Startup:
 - current default branchを確認
 - `README.md`
 - Repository内の実在するProjectローカルルールを読む
-- `ai-master/WEB_DEVELOPMENT.md`
+- `ai-master/docs/standards/WEB_DEVELOPMENT.md`
 - Open Issues / Open PRs / Latest Actions / current code
 
 ### Astro Web Starter
@@ -147,7 +147,7 @@ Startup:
 - current default branchを確認
 - `AGENTS.md`
 - `README.md`
-- `ai-master/WEB_DEVELOPMENT.md`
+- `ai-master/docs/standards/WEB_DEVELOPMENT.md`
 - Open Issues / Open PRs / Latest Actions / current code
 
 
@@ -159,7 +159,7 @@ Startup:
 - `README.md`
 - `AGENTS.md`
 - `docs/DEPLOY.md`
-- `ai-master/WEB_DEVELOPMENT.md`
+- `ai-master/docs/standards/WEB_DEVELOPMENT.md`
 - Open Issues / Open PRs / Latest Actions / current code
 
 ### キャンプ道具の十年
@@ -169,7 +169,7 @@ Startup:
 - current default branchを確認
 - `README.md`
 - `AGENTS.md`
-- `ai-master/WEB_DEVELOPMENT.md`
+- `ai-master/docs/standards/WEB_DEVELOPMENT.md`
 - Open Issues / Open PRs / Latest Actions / current code
 
 ### SURFBOARD FINDER
@@ -180,7 +180,7 @@ Startup:
 - `README.md`
 - `AGENTS.md`
 - `PROJECT_SPEC.md`
-- `ai-master/WEB_DEVELOPMENT.md`
+- `ai-master/docs/standards/WEB_DEVELOPMENT.md`
 - Open Issues / Open PRs / Latest Actions / current code
 
 ## Private Repositories
