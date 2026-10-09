@@ -169,3 +169,24 @@
   - ADR-014の「重要変更へ選択的に独立レビュー」を具体的なLevel判定へ拡張する。
   - `AI_COUNCIL.md` のMandatory resume gateはFull Councilとして維持し、Task-level cross-checkと区別する。
   - Lv5はGLOBAL MUST 14のHuman Gateを緩和しない。
+
+
+## ADR-017: ks-03 を Primary Local Windows Execution Node とする
+
+- Status: Accepted（2026-10-09、ユーザーの明示的な方針決定に基づく）
+- Decision:
+  - ADR-013 / ADR-015 の Mobile First / Cloud First を維持し、GitHub Actions / API / Connector / Remote HTTP MCP等で同等に処理できる場合はローカルPCを優先しない。
+  - ローカルWindows実行が本当に必要なTaskでは、必要能力を先に判定し、live-verifiedな候補の中で `ks-03` をPrimary Local Windows Execution Nodeとする。
+  - `ks-pc02` は、`ks-03` がlive verificationを通らない場合、または必要能力が `ks-pc02` にしか存在しない場合のfallbackとする。端末名だけで能力を推測せず、実行時点の `CONNECT.md` とlive evidenceを確認する。
+  - live verificationの最低条件は、(1) remote bridgeが応答する、(2) user-session依存Taskでは必要なWindows user sessionが存在する、(3) Taskに必要なToolが存在し必要な認証状態を満たす、の3点とする。
+  - live verificationに失敗した場合、必須CheckやReviewを黙って省略・弱体化しない。同等の別経路へ切り替えるか、理由付きで deferred / blocked と報告する。
+  - 同一Taskを `ks-03` と `ks-pc02` で同時に実装しない。Fallback時も `1 Task = 1 Active Owner` を維持し、ローカルworking copyだけを正本にせず、成果はGitHubへ反映する。
+  - Windows自動ログインは本ADRの要件にしない。`ks-03` は再起動後にsign-in画面で停止してよく、user-session依存Toolは手動sign-in後に利用可能となる設計を維持する。
+  - 現在の具体的な接続能力・Version・確認日等は `CONNECT.md` を正本とし、本ADRへ複製しない。
+- Reason: ローカルWindows処理が必要な場合の端末選択を毎回曖昧にせず、現在live verification済みの主端末へ集約して重複作業・split-brain・端末間の状態乖離を減らしつつ、Cloud FirstとCapability-based Routingを維持するため。
+- Compatibility:
+  - ADR-013 / ADR-015を上書きせず、ローカル実行層に入った後の端末Routingだけを定義する。
+  - ADR-012 / ADR-016のCapability-based Routing、`1 Task = 1 Active Owner`、Task Review Levelを維持する。
+  - `AI_COUNCIL.md` のmandatory resume gateとfail-closed条件を緩和しない。
+- Re-evaluation trigger:
+  - `ks-03` の接続・能力が継続的にlive verificationを通らない、端末構成が大きく変わる、または別端末がPrimary Local Nodeとして明らかに適する状態になった場合は、本ADRと `CONNECT.md` を再評価する。
