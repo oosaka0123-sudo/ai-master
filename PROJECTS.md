@@ -183,6 +183,17 @@ Startup:
 - `ai-master/docs/standards/WEB_DEVELOPMENT.md`
 - Open Issues / Open PRs / Latest Actions / current code
 
+### 自宅サーバーPC図鑑
+Repository: `oosaka0123-sudo/home-server-pc-2026`
+
+Startup:
+- current default branchを確認
+- `README.md`
+- `HANDOFF.md`
+- Repository内の実在するProjectローカルルールを読む
+- `ai-master/docs/standards/WEB_DEVELOPMENT.md`
+- Open Issues / Open PRs / Latest Actions / current code
+
 ### Web Design Master
 Repository: `oosaka0123-sudo/web-design-master`
 
