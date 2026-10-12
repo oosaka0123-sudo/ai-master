@@ -87,95 +87,24 @@ Limitations:
 - この棚卸しではメール送信・ラベル変更・アーカイブ等のWRITE操作は実行していないため、`WRITE` は宣言しません。
 - メールアドレス、本文、個人情報、認証情報はMasterへ保存しません。
 
-## ChatGPT → Opera Browser Connector
+## Browser automation — PC03 (current)
 
-Type: Browser Connector / Plugin
+Status: `CONNECTED / CONFIGURED / VERIFY_ON_START` (2026-10-12 JST, device-scoped)
 
-Status: `CONNECTED / READ / VERIFY_ON_START`
+- Primary browser: **dedicated Chrome profile**, isolated from the personal Chrome profile. Connect Chrome DevTools MCP via local `--browser-url`, not `--autoConnect` to the personal session.
+- Claude Code → Chrome DevTools MCP: **CONNECTED** (MCP health check succeeded on ks-03).
+- Antigravity CLI `agy` → Chrome DevTools MCP: **CONFIGURED** (server enabled/listed); real headless MCP call **BLOCKED** pending narrow tool permission. Do not bypass all permissions.
+- Standalone Gemini CLI: MCP registered, but trusted workspace and CLI authentication not yet established. **CONFIGURED only**; do not confuse with `agy`.
+- Browser operations across agents must be serialized (one worker/queue) or use separately isolated browser contexts. Do not share a personal browser profile or expose CDP to a network.
+- **Opera Browser Connector is excluded from the active browser automation path.** Do not add Opera connection recovery, watchdogs, or tab-opening steps to the default workflow. Prior connection history is superseded; this change does not uninstall Opera or alter user data.
 
-Last verified: 2026-09-26 JST
+### Search Console / public-site monitoring — PC03
 
-Verified environment:
-- Device: `ks-pc02`
-- Opera Browser Connector: v5.2.0
-- Extension ID: `fnjbijbhcehgoglobkicibfpcmddlggg`
-
-Verified capabilities:
-- ChatGPTからOperaで開いているタブ一覧の実読み取り
-- タブID・タイトル・URL・active状態の取得
-- 通常Webページのaccessibility tree / 本文 / heading / button / link構造の実読み取り
-- Browser Connector経由でChatGPTがOperaへlive接続できることを確認
-
-Connection / recovery procedure:
-1. `ks-pc02` でOperaが起動していることを確認する。
-2. Operaに `Browser Connector` 拡張が入っていることを確認する。
-3. Browser Connectorで `Allow AI connection` を有効にする。
-4. 必要に応じてOperaアカウントへサインインする。
-5. ChatGPT側からOpera Browser Connectorのタブ一覧取得を実行する。
-6. `Browser not connected` の場合は、Browser Connectorの拡張画面を開いて接続を再初期化する。
-7. 02で直接開く場合は、Operaで次の拡張ページを開ける:
-   `chrome-extension://fnjbijbhcehgoglobkicibfpcmddlggg/src/popup/index.html`
-8. 接続後、ChatGPTからタブ一覧取得が成功することを確認する。
-9. 仕上げとして任意の通常ページで本文・リンク構造の読み取りを実行し、live接続を確認する。
-
-Observed recovery evidence:
-- 2026-09-24 JST、初回はChatGPT側で `Browser not connected`。
-- `ks-pc02` 上でBrowser Connector v5.2.0の存在を確認。
-- 拡張ページをOperaで開いた後、ChatGPTからタブ一覧取得が成功。
-- 続けて通常Webページの本文・リンク構造読み取りにも成功。
-- 2026-09-25 JST、再び `Browser not connected` を確認後、Master手順どおりOpera起動・拡張ページ再オープンを行い、ChatGPTからタブ一覧取得とGoogle Play Consoleのaccessibility tree読み取りまで復旧を実確認。
-
-Observed current state:
-- 2026-09-26 JST、いったん `Browser not connected` を再現。
-- `ks-pc02` 上のOpera起動、Operaアカウントのサインイン状態、`connector.mcp.opera.com` へのDNS/HTTPS到達を確認。
-- Browser Connector画面で接続トグルをOFF→ON後、ChatGPTからOperaのタブ一覧取得が再び成功し、live接続の復旧を実確認。
-- 通常ページの本文読み取りは、今回一部タブでready timeoutが出たため、必要な作業開始時に対象タブで再確認する。
-
-Operational note:
-- ChatGPTからOperaのWeb作業を開始する前に、まずタブ一覧のread-only probeで接続確認する。
-- 接続断時は、再インストールより先に `Allow AI connection`、Operaログイン状態、拡張画面の再オープンを確認する。
-- Claude / GeminiのCLIクロスチェックが応答待ちになる場合でも、Browser Connector自身のlive readで接続可否を判定できる。
-
-Rule:
-- ブラウザで扱う情報は、ユーザーが許可したタブとタスク範囲に限定する。
-- 閲覧履歴、認証情報、Cookie、個人情報はMasterへ保存しない。
-- Operaアカウント情報、token、credential等の秘密値は保存しない。
-- 新しいセッションでは `VERIFY_ON_START` とし、タブ一覧取得などのread-only probeで再確認する。
-
-### 2026-09-27 ks-pc02 recovery / tab-growth note
-
-Observed:
-- After a ks-pc02 reboot, Remote Desktop Commander returned online and ChatGPT ping succeeded.
-- Tailscale service was verified `Running / Automatic`; `tailscale status` showed ks-pc02 online.
-- Windows OpenSSH `sshd` was verified `Running / Automatic`.
-- Claude CLI, Gemini CLI, and Antigravity CLI `agy` commands were present on ks-pc02.
-- Real Gemini review succeeded through `agy --model gemini-3.1-pro-high`; real Claude-provider review succeeded through the Claude Sonnet model exposed by `agy`.
-- Opera Browser Connector v5.2.0 could recover when its extension page was opened and ChatGPT `list_tabs` was retried.
-
-Important failure mode:
-- Repeatedly opening the Browser Connector extension page as a periodic recovery action caused many duplicate Opera tabs.
-- Therefore, **do not use a watchdog that opens a new Browser Connector tab every polling interval**.
-- A Browser Connector recovery action must be edge-triggered, not periodic tab creation.
-
-Current recovery rule:
-1. First verify ks-pc02 itself through Remote Desktop Commander.
-2. Verify Tailscale / `sshd` health without changing them when already healthy.
-3. Probe Opera Browser Connector with a read-only `list_tabs` call.
-4. If the connector is unavailable, do not repeatedly spawn extension tabs.
-5. Prefer one controlled Opera restart and open the Browser Connector extension page **once**.
-6. Re-run `list_tabs`; after recovery keep only one Browser Connector tab.
-7. If duplicate-tab growth is already severe, preserve the Opera session files before clearing the current session; do not delete cookies, saved logins, history, or credentials as part of tab cleanup.
-8. Never claim automatic recovery succeeded until `list_tabs` succeeds from ChatGPT.
-
-ks-pc02 local recovery components observed in this session:
-- Local remote watchdog script
-- Local watchdog loop script
-- Local Opera Connector health-check helper
-
-Local watchdog policy:
-- It may restart Remote Desktop Commander, Tailscale, sshd, or Opera when those processes/services are actually down.
-- It must **not** create Browser Connector tabs on every 5-minute loop.
-- Browser Connector platform-session health cannot be proven solely from Opera local state; final verification must come from an external Browser Connector probe such as ChatGPT `list_tabs`.
+- Public-site read-only check: **CONNECTED / tested** for `sixty-guide` (homepage, robots.txt, sitemap.xml all HTTP 200; sitemap 11 URLs; canonical present; no noindex on homepage).
+- Windows scheduled task `PC03-SixtyGuide-PublicHealth`: **CONFIGURED / execution tested**, daily 07:00 JST; last manual run on 2026-10-12 returned task result 0.
+- Google Search Console API monitor: **CONFIGURED / BLOCKED**. Existing local Google Cloud ADC token lacks `webmasters.readonly` scope; live `sites.list` returned HTTP 403 `ACCESS_TOKEN_SCOPE_INSUFFICIENT`. This is **not evidence that the Search Console property is unregistered**.
+- Do not modify existing Google registrations, sitemaps, DNS, OAuth credentials or Chrome sessions. API monitoring must remain read-only and must not be scheduled as successful until properly authorized and verified.
+- Local implementation details and recovery procedure are documented on PC03 in the AI_Agent workspace; do not store secrets or local credentials in this public repository.
 
 ## ChatGPT → Remote Desktop Commander → Google Cloud CLI
 
