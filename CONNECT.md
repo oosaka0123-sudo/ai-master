@@ -167,9 +167,15 @@ Verified scope / evidence:
 - `info@rss7.net` へのPC04側のログイン・デバイス認証完了（ユーザー提示画面）。
 - ChatGPTのRemote Desktop Commanderで別アカウント接続が登録済み。
 - `info@rss7.net` 側の接続を指定した `list_devices` で `ks04` Online を確認し、同接続で `ping` が `pong` を返した（2026-10-13 JST）。
+- 同専用接続でPC04のWindows PowerShell `start_process` が実際に `hostname=ks04` を返し、遠隔CLI実行に成功（2026-10-13/14 JST）。
+- PC04から `git --version` (2.56.0.windows.2)、`claude.cmd --version` (2.1.296)、`agy --version` (1.3.3) の取得に成功。
+- PC04から `git ls-remote` で公開GitHubリポジトリのHEADを取得し、Tailscale上のPC03に対するTCPポート22への到達も確認。
 
 Limitations / handoff:
-- PC04でのPowerShell/CLI実行、Claude Code、Antigravity CLI、GitHub clone/push、SSHでのPC03操作、Windowsサインイン時の自動起動は、このEvidenceだけでは成功扱いにしない。実作業前にlive verificationする。
+- CLI起動とバージョン取得は確認済みだが、PC04のClaude Code実応答は `Not logged in`、Antigravity CLI実応答はGoogle OAuth認証待ち。独立レビューが済んだとは扱わない。
+- SSH: PC04からPC03へのTCP22到達は確認したが、SSHコマンドは終了コード255でログイン失敗。PC04のOpenSSHコマンドは `ssh -V` でも255を返した。原因未確定のため接続成功扱いにしない。
+- PC04側GitHub書き込み認証、clone/fetch/commit、PC03の未コミット差分確認、実Project開発引き継ぎは未検証。
+- PC04にはWindows Startupの `DesktopCommanderRemote.vbs` と起動用PowerShellスクリプトが存在するが、再ログイン後の自動起動結果は未検証。
 - PC03のDesktop Commander利用上限に達しても、PC03本体が停止するわけではない。PC04を使う場合、まずGitHubの対象Project正本と最新の引き継ぎ内容を確認し、必要ならTailscale + SSH等の実確認済み経路を使う。
 - アカウントごとの呼出し制限が独立して見えるケースがあるが、上限値・復旧日時や継続利用可能性を推測で確定しない。
 - Secret、token、device credentials、認証コードは記録しない。
