@@ -1,6 +1,6 @@
 # CONNECT.md — AI MASTER Connection Registry
 
-Last verified: 2026-10-13 JST
+Last verified: 2026-10-14 JST
 
 このファイルは **接続状態と実確認できた能力だけ** を管理します。
 
@@ -170,11 +170,13 @@ Verified scope / evidence:
 - 同専用接続でPC04のWindows PowerShell `start_process` が実際に `hostname=ks04` を返し、遠隔CLI実行に成功（2026-10-13/14 JST）。
 - PC04から `git --version` (2.56.0.windows.2)、`claude.cmd --version` (2.1.296)、`agy --version` (1.3.3) の取得に成功。
 - PC04から `git ls-remote` で公開GitHubリポジトリのHEADを取得し、Tailscale上のPC03に対するTCPポート22への到達も確認。
+- PC04ローカルのGitで `ai-master` を `--depth 1` クローン成功、HEAD `3bc1f7b` / クリーンな `git status` を確認。`line-control` はPowerShellで `NODE_ENV=test` を指定した `node --test` が **32/32 PASS、exit 0**（2026-10-14 JST）。
 
 Limitations / handoff:
-- CLI起動とバージョン取得は確認済みだが、PC04のClaude Code実応答は `Not logged in`、Antigravity CLI実応答はGoogle OAuth認証待ち。独立レビューが済んだとは扱わない。
+- PC04でClaude Codeの対話ログインが成立し、`claude.cmd auth status` の `loggedIn=true` と、Claude Sonnetへの実プロンプト応答を確認。独立レビューの結論は「GitHubクローンとテストは可能だが、PC03の未コミット状態未確認につき完全引継ぎ未合格」。
+- Gemini（Antigravity CLI）はGoogle OAuth要求が継続し、期限内認証できなかったため、**実回答未取得**。ChatGPT・Claude・Geminiの三者合意とは記録しない。
 - SSH: PC04からPC03へのTCP22到達は確認したが、SSHコマンドは終了コード255でログイン失敗。PC04のOpenSSHコマンドは `ssh -V` でも255を返した。原因未確定のため接続成功扱いにしない。
-- PC04側GitHub書き込み認証、clone/fetch/commit、PC03の未コミット差分確認、実Project開発引き継ぎは未検証。
+- PC04側GitHubの書き込み認証・push、PC03の未コミット差分確認、実ProjectのPC03→PC04完全引き継ぎは未検証。公開GitHub repoのclone成功だけでpush成功とは言えない。
 - PC04にはWindows Startupの `DesktopCommanderRemote.vbs` と起動用PowerShellスクリプトが存在するが、再ログイン後の自動起動結果は未検証。
 - PC03のDesktop Commander利用上限に達しても、PC03本体が停止するわけではない。PC04を使う場合、まずGitHubの対象Project正本と最新の引き継ぎ内容を確認し、必要ならTailscale + SSH等の実確認済み経路を使う。
 - アカウントごとの呼出し制限が独立して見えるケースがあるが、上限値・復旧日時や継続利用可能性を推測で確定しない。
