@@ -5,9 +5,9 @@ Applies to the **public-project GitHub development workflow** when the user requ
 ## Operating contract
 
 - **PC03** remains the primary local Windows execution node; **PC04 (ks04)** is the manually selected fallback. Do **not** build an automatic failover scheduler or switch accounts silently.
-- For PC04 choose the dedicated account recorded in `CONNECT.md` (ChatGPT connection `いんふぉ０４`) and its currently Online `ks04` device. Verify the connection's account identity against `CONNECT.md`, not just its display name. The old account's `ks04` and any Offline duplicate are not substitutes.
+- For PC04 choose the dedicated account recorded in `CONNECT.md` (ChatGPT connection `いんふぉ０４`) and its currently Online `ks04` device. Match the **account email/profile identity**, its actual **device ID** from live `list_devices` against the current registered session, and `hostname=ks04`. Never rely on the device name alone or permanently assume a device ID survives re-enrollment. The old account's `ks04` and any Offline duplicate are not substitutes.
 - Route to PC04 **only after** a user instruction to do so; `03に戻して` reverses the preferred device once PC03's required capabilities have been verified.
-- GitHub is the source of truth for **pushed** work. It cannot attest to PC03's unpublished local changes.
+- GitHub is the source of truth for **pushed** work. It cannot attest to PC03's unpublished local changes. **When PC03 local state is unknown, label PC04 work PROVISIONAL:** do not assume it is the newest version, do not edit overlapping unfinished features without comparing the known Project issue/PR, and work on a separate branch until unpublished PC03 changes can be reconciled.
 - Keep PC03 and PC02 files, login sessions, services and hardware configuration unchanged unless specifically authorized for the required task. Never force-push, reset/clean, delete a worktree, or overwrite uncertain work.
 
 ## Starting a PC04 session
@@ -20,10 +20,17 @@ Applies to the **public-project GitHub development workflow** when the user requ
    git -C "<local-repo>" branch -vv
    git -C "<local-repo>" rev-parse HEAD
    git -C "<local-repo>" remote -v
+   # Output may contain embedded credentials or sensitive path names. REDACT before any issue, PR, chat or CI log.
    ```
-   Placeholder `<local-repo>` must be replaced by the project-specific verified absolute path. If dirty/untracked/unknown, preserve the files and choose another working directory or ask before editing.
-4. If the repo is absent, clone the confirmed GitHub remote into a **new** work folder. If the repo is clean and remote is verified, `git fetch origin` and only fast-forward the intended branch with `git pull --ff-only`. Do not blindly checkout `main` or change the active branch of a pre-existing workspace.
-5. Work on a new project-specific branch. Run the **project's** tests with its documented environment. For `ai-master/line-control` in PowerShell, use the correct test environment only within the test command/session, restoring a previous value afterward; do not leave `NODE_ENV=test` set during unrelated production work. Obtain independent Claude/Gemini reviews through their **actual CLI** when the task's required review level calls for them; verify both tool login and real model responses, never simulate reviewers.
+   Placeholder `<local-repo>` must be replaced by the project-specific verified absolute path. Confirm current checked-out branch and upstream via `git branch -vv` before pulling. **If dirty/untracked/unknown, STOP modifying that worktree**: preserve files and choose a separate working directory/branch or ask first. Do not publish unredacted output: file names, remote URLs and env values can be sensitive.
+4. If the repo is absent, clone the confirmed GitHub remote into a **new** work folder. If it is clean and the remote is verified, `git fetch origin`, verify the intended current branch and upstream are the correct ones, and check the local HEAD is an ancestor of its intended upstream (e.g. `git merge-base --is-ancestor HEAD origin/<branch>`). Only then use `git pull --ff-only origin <branch>`. Do not blindly checkout `main` or change the active branch of a pre-existing workspace.
+5. Work on a new project-specific branch. Run the **project's** tests with its documented environment. For `ai-master/line-control` in PowerShell:
+   ```powershell
+   $prior = $env:NODE_ENV
+   try { $env:NODE_ENV='test'; node --test }
+   finally { if ($null -eq $prior) { Remove-Item Env:NODE_ENV -ErrorAction SilentlyContinue } else { $env:NODE_ENV=$prior } }
+   ```
+   Do not leave `NODE_ENV=test` set during unrelated production work. Obtain independent Claude/Gemini reviews through their **actual CLI** when the task's required review level calls for them; verify both tool login and real model responses, never simulate reviewers.
 
 ## GitHub write path that does not require local Git authentication
 
@@ -50,9 +57,9 @@ git log --branches --not --remotes --oneline  # preliminary: remote refs may be 
 git worktree list
 ```
 
-Also check intentionally ignored or non-Git local assets required by the project **without disclosing secrets**. If unpublished **non-secret code** is present, back it up in an authorized private/reviewed project branch or other approved location, and reconcile to PC04 only after verifying visibility. Never place `.env`, credentials, keys, private-workspace metadata or nonpublic assets in a public Git branch, PR, issue, or CI log. Transfer restricted non-Git data only by a separately approved encrypted/direct channel, verifying hashes without exposing content; then run project-specific tests. Never assume no changes based on GitHub alone. Do not publicize private repository names or contents in this public master.
+Also inspect ignored/untracked/non-Git local assets and, if applicable, submodules and Git LFS, **without disclosing secrets**. Suggested read-only commands for each relevant worktree are `git status --ignored --short`, `git submodule status` and (if installed) `git lfs ls-files`. Verify remote tracking refs via safe `git fetch` before treating `git log --branches --not --remotes` as a complete unpublished-commit inventory. If unpublished **non-secret code** is present, back it up in an authorized private/reviewed project branch or other approved location, and reconcile to PC04 only after verifying visibility. Never place `.env`, credentials, keys, private-workspace metadata or nonpublic assets in a public Git branch, PR, issue, or CI log. Transfer restricted non-Git data only by a separately approved encrypted/direct channel, verifying hashes without exposing content; then run project-specific tests. Never assume no changes based on GitHub alone. Do not publicize private repository names or contents in this public master.
 
-PC04's fallback SSH client may be PuTTY/Plink, but the PC03 login and host-key authentication have **not** been validated. Do not disable host verification or guess/store passwords. PC03's local data must remain untouched until authorized access is available.
+PC04's fallback SSH client may be PuTTY/Plink, but the PC03 login and host-key authentication have **not** been validated. Before trusting the displayed fingerprint, independently obtain the **server's** key fingerprint at PC03's authenticated local console (e.g. Windows OpenSSH host public-key file fingerprint via `ssh-keygen -lf`) and match it out-of-band. Do not disable host verification or guess/store passwords. Do not copy any private host key. PC03's local data must remain untouched until authorized access is available.
 
 ## Windows startup and account isolation
 
@@ -62,7 +69,7 @@ PC04's fallback SSH client may be PuTTY/Plink, but the PC03 login and host-key a
 
 ## Acceptance and status terms
 
-- **PC04 fallback GitHub development: VERIFIED** only if Online RDC, repo fetch/clone, GitHub connector PR/merge (if changes needed), PC04 fast-forward sync, clean status, and project tests are evidenced for the specific task.
+- **PC04 fallback GitHub development: VERIFIED FOR THE SCOPED, PUSHED TASK ONLY** if Online RDC, repo fetch/clone, authorized GitHub connector PR/merge (if changes needed), PC04 fast-forward sync, clean status, and project tests are evidenced for the specific task. This does not assert that PC03 unpublished changes were preserved or transferred.
 - **PC03 full local migration: PENDING** until the relevant PC03 unpublished work and external assets have been safely inventoried and reconciled.
 - **Windows restart resilience: PENDING** until an actual sign-out/sign-in or reboot recovery test succeeds.
 - A completed three-model review is **advice**, not proof that missing remote credentials or unpublished code were transferred.
