@@ -155,7 +155,7 @@ Type: Remote computer bridge / secondary Windows execution node
 
 Status: `CONNECTED / VERIFY_ON_START` (device- and account-scoped evidence)
 
-Verified: 2026-10-13 JST
+Verified: 2026-10-14 JST
 
 Account / device routing:
 - PC04 (`ks04`) のRemote Desktop Commanderは **`info@rss7.net` 専用**。ChatGPTの別接続として「いんふぉ０４」を選び、旧アカウント接続とは混同しない。
@@ -171,14 +171,15 @@ Verified scope / evidence:
 - PC04から `git --version` (2.56.0.windows.2)、`claude.cmd --version` (2.1.296)、`agy --version` (1.3.3) の取得に成功。
 - PC04から `git ls-remote` で公開GitHubリポジトリのHEADを取得し、Tailscale上のPC03に対するTCPポート22への到達も確認。
 - PC04ローカルのGitで `ai-master` を `--depth 1` クローン成功、HEAD `3bc1f7b` / クリーンな `git status` を確認。`line-control` はPowerShellで `NODE_ENV=test` を指定した `node --test` が **32/32 PASS、exit 0**（2026-10-14 JST）。
+- PC04 `git pull --ff-only origin main` によるGitHub最新commit取得・作業ツリークリーンを再確認。旧RDCプロセスと新RDCプロセスを親子関係・起動時刻で識別して旧側だけ停止し、新しい `info@rss7.net` 接続は `ping` に成功。正規 `device.json` のdevice ID一致、稼働remoteが1プロセスであることを確認。自動起動スクリプトの再実行は既存プロセスを検出して重複起動せず、exit 0。
 
 Limitations / handoff:
 - PC04でClaude Codeの対話ログインが成立し、`claude.cmd auth status` の `loggedIn=true` と、Claude Sonnetへの実プロンプト応答を確認。独立レビューの結論は「GitHubクローンとテストは可能だが、PC03の未コミット状態未確認につき完全引継ぎ未合格」。
 - Gemini（Antigravity CLI）は PC04 の `agy models` で正しいモデルID `gemini-3.8-flash-high` を確認（旧 `gemini-3.1-pro-high` は未登録）。`agy --version` は **1.3.4**。同モデルへの独立レビュー実プロンプト呼出しが exit 0 で完了し、日本語の実回答を取得（2026-10-14 JST）。
 - ChatGPT・Claude Sonnet・Gemini 3.8 Flash High の**実Providerによる独立評価**を取得済み。共通見解は「PC04のGitHub同期済み作業・開発テストは可能だが、PC03の未commit/未push差分の存在は未確認のため完全引き継ぎは未合格」。
-- SSH: PC04からPC03へのTCP22到達は確認したが、SSHコマンドは終了コード255でログイン失敗。PC04のOpenSSHコマンドは `ssh -V` でも255を返した。原因未確定のため接続成功扱いにしない。
-- PC04側GitHubの書き込み認証・push、PC03の未コミット差分確認、実ProjectのPC03→PC04完全引き継ぎは未検証。公開GitHub repoのclone成功だけでpush成功とは言えない。
-- PC04にはWindows Startupの `DesktopCommanderRemote.vbs` と起動用PowerShellスクリプトが存在するが、再ログイン後の自動起動結果は未検証。
+- SSH: PC04からPC03へのTailscale TCP22到達は確認。PC04のWindows OpenSSH 2系統は `ssh -V` 自体がexit 255のため、公式配布元PuTTY 0.85（winget、ハッシュ検証成功）を導入し、Plink 0.85起動・PC03のSSHサーバー接続まで確認。ホスト鍵を明示しても認証入力が必要で、ログイン成功は未確認。認証・ホスト鍵の確認を省略しない。SMBポート445も到達するがアクセス拒否。
+- PC04のローカル `git push --dry-run` はGitHub認証未設定でexit 128。Git Credential Managerのブラウザ認証は開始済みだが、本人承認・書き込み認証完了を未確認。GitHub ConnectorでのPR/merge→PC04のpullは実証済みで、これとローカルpush権限を区別する。PC03の未コミット/未push差分と、実Projectの完全引継ぎは未確認。
+- PC04のWindows Startupに `DesktopCommanderRemote.vbs` と起動用PowerShellスクリプトが存在し、実行時の重複起動防止と現行RDC接続維持は確認済み。ただしWindowsサインアウト・再ログイン後の自動復旧はまだ未検証。
 - PC03のDesktop Commander利用上限に達しても、PC03本体が停止するわけではない。PC04を使う場合、まずGitHubの対象Project正本と最新の引き継ぎ内容を確認し、必要ならTailscale + SSH等の実確認済み経路を使う。
 - アカウントごとの呼出し制限が独立して見えるケースがあるが、上限値・復旧日時や継続利用可能性を推測で確定しない。
 - Secret、token、device credentials、認証コードは記録しない。
