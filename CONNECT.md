@@ -1,6 +1,6 @@
 # CONNECT.md — AI MASTER Connection Registry
 
-Last verified: 2026-10-09 JST
+Last verified: 2026-10-13 JST
 
 このファイルは **接続状態と実確認できた能力だけ** を管理します。
 
@@ -148,6 +148,31 @@ Operational notes:
 - 新しいsessionではRemote Desktop CommanderまたはTailscale + OpenSSH経路をread-only probeから再確認する。
 - Token / Credential / account identifier / local secretはMasterへ保存しない。
 - Local executionの優先順位は接続Evidenceではなく `DECISIONS.md` ADR-017 / `AGENTS.md` が定義する。`CONNECT.md` は能力と接続状態のEvidence registryとして扱う。
+
+## ChatGPT → Remote Desktop Commander → ks04 (dedicated account)
+
+Type: Remote computer bridge / secondary Windows execution node
+
+Status: `CONNECTED / VERIFY_ON_START` (device- and account-scoped evidence)
+
+Verified: 2026-10-13 JST
+
+Account / device routing:
+- PC04 (`ks04`) のRemote Desktop Commanderは **`info@rss7.net` 専用**。ChatGPTの別接続として「いんふぉ０４」を選び、旧アカウント接続とは混同しない。
+- PC03は従来のDesktop Commanderアカウントを使用。PC03/PC02の既存設定は変更しない。
+- ユーザーが「04で進めて」と明示指示したときにPC04を使用し、「03に戻して」でPC03に戻す。**利用上限による自動切り替えは行わない**。
+- アカウント表示名やdevice IDは永続識別子として決め打ちせず、実行ごとに利用可能な接続と対象deviceを照合する。
+
+Verified scope / evidence:
+- `info@rss7.net` へのPC04側のログイン・デバイス認証完了（ユーザー提示画面）。
+- ChatGPTのRemote Desktop Commanderで別アカウント接続が登録済み。
+- `info@rss7.net` 側の接続を指定した `list_devices` で `ks04` Online を確認し、同接続で `ping` が `pong` を返した（2026-10-13 JST）。
+
+Limitations / handoff:
+- PC04でのPowerShell/CLI実行、Claude Code、Antigravity CLI、GitHub clone/push、SSHでのPC03操作、Windowsサインイン時の自動起動は、このEvidenceだけでは成功扱いにしない。実作業前にlive verificationする。
+- PC03のDesktop Commander利用上限に達しても、PC03本体が停止するわけではない。PC04を使う場合、まずGitHubの対象Project正本と最新の引き継ぎ内容を確認し、必要ならTailscale + SSH等の実確認済み経路を使う。
+- アカウントごとの呼出し制限が独立して見えるケースがあるが、上限値・復旧日時や継続利用可能性を推測で確定しない。
+- Secret、token、device credentials、認証コードは記録しない。
 
 ## Claude Code → GitHub
 
