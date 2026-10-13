@@ -5,7 +5,7 @@ Applies to the **public-project GitHub development workflow** when the user requ
 ## Operating contract
 
 - **PC03** remains the primary local Windows execution node; **PC04 (ks04)** is the manually selected fallback. Do **not** build an automatic failover scheduler or switch accounts silently.
-- Use the Remote Desktop Commander account **`info@rss7.net`** only when operating PC04. Select the connected ChatGPT account `いんふぉ０４` and its current Online `ks04` device. The old account's `ks04` and any Offline duplicate are not substitutes.
+- For PC04 choose the dedicated account recorded in `CONNECT.md` (ChatGPT connection `いんふぉ０４`) and its currently Online `ks04` device. Verify the connection's account identity against `CONNECT.md`, not just its display name. The old account's `ks04` and any Offline duplicate are not substitutes.
 - Route to PC04 **only after** a user instruction to do so; `03に戻して` reverses the preferred device once PC03's required capabilities have been verified.
 - GitHub is the source of truth for **pushed** work. It cannot attest to PC03's unpublished local changes.
 - Keep PC03 and PC02 files, login sessions, services and hardware configuration unchanged unless specifically authorized for the required task. Never force-push, reset/clean, delete a worktree, or overwrite uncertain work.
@@ -16,18 +16,18 @@ Applies to the **public-project GitHub development workflow** when the user requ
 2. In the `info@rss7.net` RDC connection call `list_devices` and choose **Online ks04**. Test `ping` (if needed), `hostname` via terminal and `git --version`. If the selected device is Offline or the command fails, report that fact: do not fall back to an identically named device in another account.
 3. Before changing local files, inspect the exact repo:
    ```powershell
-   git -C <local-repo> status --porcelain=v1 -uall
-   git -C <local-repo> branch -vv
-   git -C <local-repo> rev-parse HEAD
-   git -C <local-repo> remote -v
+   git -C "<local-repo>" status --porcelain=v1 -uall
+   git -C "<local-repo>" branch -vv
+   git -C "<local-repo>" rev-parse HEAD
+   git -C "<local-repo>" remote -v
    ```
    Placeholder `<local-repo>` must be replaced by the project-specific verified absolute path. If dirty/untracked/unknown, preserve the files and choose another working directory or ask before editing.
 4. If the repo is absent, clone the confirmed GitHub remote into a **new** work folder. If the repo is clean and remote is verified, `git fetch origin` and only fast-forward the intended branch with `git pull --ff-only`. Do not blindly checkout `main` or change the active branch of a pre-existing workspace.
-5. Work on a new project-specific branch. Run the **project's** tests with its documented environment (for `ai-master/line-control` in PowerShell, set `$env:NODE_ENV='test'` before `node --test`). Obtain independent Claude/Gemini reviews through their **actual CLI** when the task's required review level calls for them; verify both tool login and real model responses, never simulate reviewers.
+5. Work on a new project-specific branch. Run the **project's** tests with its documented environment. For `ai-master/line-control` in PowerShell, use the correct test environment only within the test command/session, restoring a previous value afterward; do not leave `NODE_ENV=test` set during unrelated production work. Obtain independent Claude/Gemini reviews through their **actual CLI** when the task's required review level calls for them; verify both tool login and real model responses, never simulate reviewers.
 
 ## GitHub write path that does not require local Git authentication
 
-The following path has been end-to-end demonstrated and is the preferred fallback while PC04's Git Credential Manager is unauthenticated:
+The following path has been end-to-end demonstrated **for `ai-master` only** and is the preferred fallback while PC04's Git Credential Manager is unauthenticated. For every different Project, verify that the GitHub connector has access, repository protections and CI permit the proposed PR/merge, and the current local branch is safe to update:
 
 1. Make approved changes using the connected **GitHub connector** on a new branch.
 2. Inspect diff and run appropriate tests or CI; use PR review and merge only when repository rules allow it.
@@ -46,11 +46,11 @@ To assert **full handoff**, an authorized PC03 session must first inventory each
 git status --porcelain=v1 -uall
 git branch -vv
 git stash list
-git log --branches --not --remotes --oneline
+git log --branches --not --remotes --oneline  # preliminary: remote refs may be stale; verify against GitHub after safe fetch
 git worktree list
 ```
 
-Also check intentionally ignored or non-Git local assets required by the project **without disclosing secrets**. If anything unpublished is present, safely back it up and reconcile it to PC04 using an authorized method (reviewed work branch / encrypted approved transfer), verify hashes and commits, then run project-specific tests. Never assume no changes based on GitHub alone. Do not publicize private repository names or contents in this public master.
+Also check intentionally ignored or non-Git local assets required by the project **without disclosing secrets**. If unpublished **non-secret code** is present, back it up in an authorized private/reviewed project branch or other approved location, and reconcile to PC04 only after verifying visibility. Never place `.env`, credentials, keys, private-workspace metadata or nonpublic assets in a public Git branch, PR, issue, or CI log. Transfer restricted non-Git data only by a separately approved encrypted/direct channel, verifying hashes without exposing content; then run project-specific tests. Never assume no changes based on GitHub alone. Do not publicize private repository names or contents in this public master.
 
 PC04's fallback SSH client may be PuTTY/Plink, but the PC03 login and host-key authentication have **not** been validated. Do not disable host verification or guess/store passwords. PC03's local data must remain untouched until authorized access is available.
 
