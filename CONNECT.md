@@ -161,6 +161,7 @@ Account / device routing:
 - PC04 (`ks04`) のRemote Desktop Commanderは **`info@rss7.net` 専用**。ChatGPTの別接続として「いんふぉ０４」を選び、旧アカウント接続とは混同しない。
 - PC03は従来のDesktop Commanderアカウントを使用。PC03/PC02の既存設定は変更しない。
 - ユーザーが「04で進めて」と明示指示したときにPC04を使用し、「03に戻して」でPC03に戻す。**利用上限による自動切り替えは行わない**。
+- PC04手動切替の実行手順・既存作業の保護・受け入れ基準: [`docs/operations/PC04_MANUAL_FALLBACK.md`](docs/operations/PC04_MANUAL_FALLBACK.md)。
 - アカウント表示名やdevice IDは永続識別子として決め打ちせず、実行ごとに利用可能な接続と対象deviceを照合する。
 
 Verified scope / evidence:
