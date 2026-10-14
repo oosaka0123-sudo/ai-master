@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/start.mjs",
     "monitor:once": "node src/monitorOnce.mjs",
-    "test": "NODE_ENV=test node --test test/*.test.mjs"
+    "test": "NODE_ENV=test node --test test/*.test.mjs",
+    "gemini:review": "node src/geminiCrosscheck.mjs"
   },
   "engines": {
     "node": ">=20"

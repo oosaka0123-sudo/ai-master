@@ -122,3 +122,16 @@ Job起動時に `CONTROL_REPOSITORY=<target owner/repo>` と `CONTROL_COMMAND=co
 - 初回bootstrap後の `LINE_BOOTSTRAP_CODE` 削除
 
 これらSecret/IAM設定はHuman Gateで行い、値そのものはRepositoryへ保存しません。
+
+## Gemini cross-check: latest-model routing
+
+Gemini reviewは固定model slugを使わず、`agy models` の実行結果から最新世代を自動選択できます。
+
+```bash
+npm run gemini:review -- "この変更を独立レビューして。問題点・代替案・見落としを指摘して"
+```
+
+選択ロジックは `src/geminiRouting.mjs`、CLI入口は `src/geminiCrosscheck.mjs` です。世代/バージョンを数値比較し、同一世代ではHigh reasoningを優先します。第一候補が利用不能な場合だけ次点へfallbackし、実際に使ったmodel slugをstderrへ記録します。
+
+共通方針は `../docs/standards/GEMINI_MODEL_ROUTING.md` を参照してください。
+
