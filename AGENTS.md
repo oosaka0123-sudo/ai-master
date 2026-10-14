@@ -65,7 +65,7 @@
     正当な理由がある場合はProjectローカルルールで上書きできる。詳細は `DECISIONS.md`
     ADR-015、既存のADR-013（PC電源OFF運用）を参照。
 14. **Remote Desktop Commander fallback**: Remote Desktop Commander が利用不能・未接続・不安定で、Windows端末へのリモートCLI操作が必要な場合は、代替経路として **Tailscale + Windows OpenSSH** を優先する。使用前に対象端末のTailscale接続、OpenSSH稼働、認証・到達性を実確認し、未確認の接続を `CONNECTED` と扱わない。Cloud Firstで代替できる処理は、引き続きGitHub Actions / Remote HTTP MCP等のクラウド経路を優先する。
-15. **Capability-based Local Windows Execution（ADR-019）**: Cloud Firstを優先する。ローカルWindowsが必要な場合は、PC03 / PC04 / PC02等の端末名で固定せず、Taskに必要な能力・接続・認証・user sessionを実確認できた端末を選ぶ。利用不能な端末の復旧を他の安全な作業の着手条件にしない。1 Task = 1 Active OwnerとGitHub SSOTを維持し、実確認なしにCONNECTEDと報告しない。
+15. **Capability-based Local Windows Execution（ADR-019）**: Cloud Firstを優先する。ローカルWindowsが必要な場合は、PC03 / PC04 / PC02等の端末名で固定せず、Taskに必要な能力・接続・認証・user sessionを実確認できた端末を選ぶ。利用不能な端末の復旧を他の安全な作業の着手条件にしない。1 Task = 1 Active OwnerとGitHub SSOTを維持し、実確認なしにCONNECTEDと報告しない。端末切替時は接続元の認可、実行者権限、対象Repo/Taskへのアクセス、必要なツール・認証・Windows user sessionを個別に検証する。PC03固有の未push作業・ローカルスキル等は回収確認までPending Recoveryとして扱い、移行済みと報告しない。未検証端末へのSecret転送や必須レビューの省略は禁止する。
 
 ## Task Review Level Routing — Lv1-Lv5
 
