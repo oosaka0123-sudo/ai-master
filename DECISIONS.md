@@ -202,3 +202,12 @@
   - 意図的に廃止された文書を指すstale stubは残さず、Git historyと現行方針が一致する状態にする。
 - Reason: rootのファイル数と初期コンテキストを抑え、AIと人間が入口を素早く理解できる状態を維持しつつ、SSOTと既存automation互換性を守るため。
 - Compatibility: CONNECT / PROJECTS / DECISIONSのroot path、AGENTS New Session Protocol、AI_COUNCIL resume gateは変更しない。
+
+
+## ADR-019（提案）: Local execution nodeは能力ベースで選択する
+
+- Status: Proposed（このPRのレビュー・承認後にAcceptedへ変更）
+- Context: ADR-017はks-03をPrimaryとし、Cloud First環境でPC03停止時の継続性と矛盾する場合がある。
+- Decision: Cloud Firstを優先し、Windows固有Taskは実行時に必要能力・接続・認証・user sessionをlive verificationした端末（PC03 / PC04 / PC02等）から選ぶ。固定Primaryは設けず、1 Task = 1 Active Ownerを維持する。
+- Compatibility: 本ADRがAcceptedになった場合、ADR-017の固定Primary選択部分を置き換える。接続確認・安全境界・GitHub SSOTは引き続き有効。
+- Non-goals: PC03の自動復旧、端末間の無条件自動フェイルオーバー、Secret変更、既存サービス移設は行わない。
