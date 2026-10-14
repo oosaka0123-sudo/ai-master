@@ -36,7 +36,7 @@ Project固有の仕様・進捗・コードは各Project Repositoryを正本と�
 2. **Project固有の仕様・コード・実装状態**: 対象Project Repository
 3. **停止Projectのresume policy**: `AI_COUNCIL.md`
 4. **Projectローカル運用**: Project側AGENTS等。ただし上位Securityと必須resume gateは緩和不可
-5. **Web制作共通標準**: `docs/standards/WEB_DEVELOPMENT.md`
+5. **Web制作共通標準**: `docs/standards/WEB_DEVELOPMENT.md`（安全・技術品質はai-master、ビジュアル・ブランド表現はweb-design-masterを正本とし、どちらも上位の安全ルールを緩和できない）
 6. **現在状態**: current code / Issue / PR / Actions等のGitHub実態
 7. **過去チャット・LLM記憶**: GitHubと矛盾する場合は採用しない
 
