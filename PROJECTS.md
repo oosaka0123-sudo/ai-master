@@ -25,6 +25,17 @@ Startup:
 - Repository内のREADME / docs等の実在する開始ファイル
 - Open Issues / Open PRs / Latest Actions
 
+### 関東サーファーKS
+Repository: `oosaka0123-sudo/kanto-surfer-ks`
+
+Startup:
+- current default branchを確認
+- `AGENTS.md`
+- `README.md`
+- `HANDOFF.md`
+- Repository内のdocs等の実在する開始ファイル
+- Open Issues / Open PRs / Latest Actions / current code
+
 ### RSS7 AI Works
 Repository: `oosaka0123-sudo/rss7-ai-works`
 
