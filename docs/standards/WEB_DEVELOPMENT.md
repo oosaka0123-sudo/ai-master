@@ -543,16 +543,7 @@ AIは作業速度と検証密度を上げるために使うが、事実確認と
 - **Content / SEO review** — コンテンツ・SEO
 - **Visual review** — UI / UX
 
-複数AIでクロスチェックする場合:
-
-1. Round 1 — 独立レビュー
-2. Round 2 — 相互反論・補強
-3. Round 3 — 修正版レビュー
-4. Round 4 — 最終監査
-
-ただし、軽微な変更に毎回4 Roundを強制しない。重大変更、新規標準、Architecture変更等で利用する。
-
-実際に外部AIへ問い合わせた結果と、単なる擬似視点レビューを混同しない。
+複数AIによるレビューの実施条件・Lv・独立性・ラウンド数は `AGENTS.md` の `Task Review Level Routing` を唯一の正本とする。Web制作の「3AIコンペ（独立制作）」と「3AIクロスレビュー（独立監査）」は区別する。AI_COUNCILの停止Project再開ゲートは別途適用する。実際に呼び出せなかったProviderをレビュー済みとして扱わない。
 
 ---
 

@@ -49,7 +49,7 @@ Councilは少なくとも次を確認する。
 ### Antigravity CLI routing
 
 - Cloud / API / Remote MCP等で同等のGemini review経路がProjectまたはOrchestrator側に実確認済みなら、ADR-013 / ADR-015 のCloud Firstを優先してよい。
-- Antigravity CLI `agy` を使うGeminiレビューでは、必要能力を確認したうえでlive-verifiedな `ks-03` をprimary local nodeとする。user-session依存の実行ではWindows user sessionの存在も確認する。`ks-03` がlive verificationを通らない場合、または必要能力が `ks-pc02` にしか存在しない場合だけ、live-verifiedな `ks-pc02` をfallbackとして使う。
+- Antigravity CLI `agy` を使うGeminiレビューでは、Cloud Firstを優先し、ローカル実行が必要なら実行時点で必要能力・認証・user sessionを確認できた端末を選ぶ。端末名による固定優先は設けない。
 - 利用可能モデル確認は `agy models`、Geminiの疎通確認は短い `--print` 実行で行う。どのlocal nodeも必要条件を満たさない場合、必須Gemini reviewを黙って省略せず、mandatory resume gateでは未完了としてfail closedする。
 - 旧 `gemini` CLIが `UNSUPPORTED_CLIENT` 等で利用不能でも、`agy` が実動作していればGemini providerは利用可能として扱える。
 - Claudeレビューについても、Antigravity CLI上のClaudeモデルを使う場合は実際にClaudeモデルを指定して独立回答を取得する。ChatGPTがClaude視点を代筆してはならない。
