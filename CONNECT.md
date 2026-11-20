@@ -89,14 +89,16 @@ Limitations:
 
 ## Browser automation — PC03 (current)
 
-Status: `CONNECTED / CONFIGURED / VERIFY_ON_START` (2026-10-12 JST, device-scoped)
+Status: `CONNECTED / CONFIGURED / VERIFY_ON_START` (2026-10-12 JST, device-scoped; browser role updated 2026-11-20 JST by ADR-019)
 
-- Primary browser: **dedicated Chrome profile**, isolated from the personal Chrome profile. Connect Chrome DevTools MCP via local `--browser-url`, not `--autoConnect` to the personal session.
+- Standard browser on PC03 (2026-11-20〜、試行運用): **Opera + Opera Browser Connector**。対象はChatGPTからのタブ一覧・ページ遷移・本文読み取り。方針は `DECISIONS.md` ADR-019、接続Evidenceは下記「ChatGPT → Opera Browser Connector — PC03」節を正本とする。
+- Fallback browser on PC03: **dedicated Chrome profile**, isolated from the personal Chrome profile. Opera Connectorが使えない場合、またはクリック・文字入力など同Connectorで確認できていない操作が必要な場合に使う。Connect Chrome DevTools MCP via local `--browser-url`, not `--autoConnect` to the personal session.
 - Claude Code → Chrome DevTools MCP: **CONNECTED** (MCP health check succeeded on ks-03).
 - Antigravity CLI `agy` → Chrome DevTools MCP: **CONFIGURED** (server enabled/listed); real headless MCP call **BLOCKED** pending narrow tool permission. Do not bypass all permissions.
 - Standalone Gemini CLI: MCP registered, but trusted workspace and CLI authentication not yet established. **CONFIGURED only**; do not confuse with `agy`.
 - Browser operations across agents must be serialized (one worker/queue) or use separately isolated browser contexts. Do not share a personal browser profile or expose CDP to a network.
-- **Opera Browser Connector is excluded from the active browser automation path.** Do not add Opera connection recovery, watchdogs, or tab-opening steps to the default workflow. Prior connection history is superseded; this change does not uninstall Opera or alter user data.
+- Opera Browser Connectorの接続回復は本人操作を基本とし、watchdogによる定期的な再接続・拡張画面/タブの自動オープンは引き続き禁止する（2026-09-27 ks-pc02でのタブ増殖事例）。
+- PC04（ks04）のブラウザ運用はこの節の対象外で、既存のChrome運用を維持する。
 
 ### Search Console / public-site monitoring — PC03
 
@@ -106,7 +108,7 @@ Status: `CONNECTED / CONFIGURED / VERIFY_ON_START` (2026-10-12 JST, device-scope
 - Do not modify existing Google registrations, sitemaps, DNS, OAuth credentials or Chrome sessions. API monitoring must remain read-only and must not be scheduled as successful until properly authorized and verified.
 - Local implementation details and recovery procedure are documented on PC03 in the AI_Agent workspace; do not store secrets or local credentials in this public repository.
 
-## ChatGPT → Opera Browser Connector — PC03 (auxiliary re-verification)
+## ChatGPT → Opera Browser Connector — PC03
 
 Type: Browser Connector / Plugin（ChatGPT plugin v2.0.0）
 
@@ -115,7 +117,7 @@ Status: `CONNECTED / READ / VERIFY_ON_START`（`ks-03`、device-scoped、時間�
 Verified: 2026-11-20 JST
 
 Policy note:
-- 上記「Browser automation — PC03」の **Opera Browser Connectorを既定の自動化経路から外す方針は変更しない**。本節は補助経路としての接続確認記録であり、常用基盤への復帰を意味しない。
+- 2026-11-20 JST、ユーザーの明示的な方針決定により、PC03の標準ブラウザをOperaへ変更した（試行運用、`DECISIONS.md` ADR-019）。本節はその接続Evidenceを記録する。
 
 Observed before recovery:
 - ChatGPTから一時的にタブ一覧取得・本文読み取り・新規タブ作成に成功した後、ChatGPT側「接続の有効期限が切れています／再接続」とOpera側「無効または期限切れの同意トークン」が繰り返された。
@@ -130,15 +132,18 @@ Verified after recovery:
 - 接続先が `ks-03` のOperaであることを、ChatGPTが返したアクティブタブ（example.com）とPC03画面上のOperaの一致で確認。
 - 11:57 JST: 操作前の `list_tabs`（10件）は成功。新規タブ作成はツール許可確認で中断し未完了。
 - 12:24 JST: 新規タブ作成の再テスト成功。作成前10件→作成後11件、`https://example.org/` がアクティブ、既存10タブのID・URLは維持、認証エラーなし。（確認主体: ChatGPT session）
+- 12:31 JST: `list_tabs` 成功（11件、アクティブ `https://example.org/`、認証エラーなし）。12:24から約7分後のため「時間を空けた確認」には数えない。（確認主体: ChatGPT session）
+- 13:03 JST頃: 接続、新規タブ作成、ページ表示、本文読み取り、同一タブでの別ページへの移動に成功。既存タブは変更なし。（ユーザー共有の報告。実施セッションは未記載）
 
 Current assessment:
-- **接続整理後、新規タブ作成まで成功。時間を空けた接続確認は未実施（待ち）。**
+- **接続整理後、新規タブ作成・ページ遷移・本文読み取りまで成功。数時間後または翌日の接続確認は未実施（待ち）。**
 - 重複接続は有力な原因候補だが、原因として確定していない。「解消」とは記録しない。
 - 同種の断続的切断・再認証要求は公開報告がある（例: openai/codex Issue #48022、Opera Forums「Browser Connector repeatedly disconnects」）。外部情報としてClaude sessionで出典確認、追試はしていない。
 
 Limitations / unverified:
 - Opera側で旧Browser Connector拡張（v5.2.0系）と現行のAI Services組み込み機能が併存しているかは未確認。
 - 複数作業の並行時に画面の前面切替が起きないかは未検証。
+- クリック・文字入力は未検証。Opera公式ブログはAIによるクリック・フォーム入力を対象外と説明しているため、未対応の可能性がある。
 
 Recovery rule:
 - 接続エラー時、AIは再接続や接続確認を連続で繰り返さない。read-only probeは1回で止め、再接続は本人が1回だけ行う。
