@@ -93,7 +93,7 @@
 - Decision:
   - 定型処理、監視、データ取得、更新、デプロイ、検証など、ブラウザUI操作を必要としない作業は GitHub Actions / API / Connector / MCP を第一選択とする。
   - ブラウザ操作は API や GitHub 操作で代替できない場合の補助経路とし、PCローカルのブラウザや常時起動PCを24/7運用の必須依存にしない。
-  - Opera Browser Connector はPC起動時の補助経路として利用可能だが、全Project共通の常時運用基盤とはみなさない。
+  - Opera Browser Connector はPC起動時の補助経路として利用可能だが、全Project共通の常時運用基盤とはみなさない。（PC03のローカル標準ブラウザの選択はADR-019で更新。API / Actions優先という本ADRの順序は変更しない）
   - ChatGPT Work / Cloud Browser等のクラウドブラウザも、ブラウザ操作が必要な場合の補助経路とし、常用を前提にしない。
   - Secrets / Credential / IAM / Billingなどの既存Human Gateはこの方針変更によって緩和しない。
 - Reason: PC電源OFFでも継続可能な自動化を増やし、ローカル端末・ブラウザセッション・UI変更への依存を減らしつつ、トークン・運用コスト・障害点を抑えるため。
@@ -202,3 +202,23 @@
   - 意図的に廃止された文書を指すstale stubは残さず、Git historyと現行方針が一致する状態にする。
 - Reason: rootのファイル数と初期コンテキストを抑え、AIと人間が入口を素早く理解できる状態を維持しつつ、SSOTと既存automation互換性を守るため。
 - Compatibility: CONNECT / PROJECTS / DECISIONSのroot path、AGENTS New Session Protocol、AI_COUNCIL resume gateは変更しない。
+
+## ADR-019: PC03（ks-03）の標準ブラウザをOperaとする（試行運用）
+
+- Status: Accepted（2026-11-20、ユーザーの明示的な方針決定に基づく。試行運用）
+- Decision:
+  - PC03（`ks-03`）でローカルブラウザが必要なTaskの標準ブラウザを、Opera + Opera Browser Connectorとする。対象は、ChatGPTからのタブ一覧取得・ページ遷移・本文読み取り。
+  - PC03のChrome（個人用と分離した専用プロファイル + Chrome DevTools MCP）は予備とする。Opera Connectorが接続できない場合、またはクリック・文字入力などOpera Connectorで確認できていない操作が必要な場合に使う。
+  - PC04（`ks04`）は既存のChrome運用を維持し、本ADRの対象外とする。
+  - ADR-013 / ADR-015のAPI・GitHub Actions・Cloud優先、およびADR-017のローカル端末Routingは変更しない。ローカルブラウザはそれらで代替できない場合だけ使う。
+  - 接続回復は本人操作を基本とする。AIは接続エラー時に再接続・接続確認を連続で繰り返さず、read-only probe 1回で止めて報告する。watchdogによる定期的な再接続・タブ自動オープンは行わない。
+  - 再接続後は、ChatGPT側の「接続済みアカウント」が1件だけであることを確認する。
+  - 現在の接続状態・確認日・テスト結果は `CONNECT.md` を正本とし、本ADRへ複製しない。
+- Reason: 2026-11-20 JSTにPC03のOperaで接続・新規タブ作成・ページ遷移・本文読み取りが実動作で確認でき、ユーザーがPC03での標準利用を決定したため。
+- Known limitations:
+  - 長時間放置後の再接続安定性は未検証。
+  - クリック・文字入力は未検証で、Opera公式の説明では対象外とされている。
+  - Opera Browser Connectorには、Windows / macOSで断続的な切断・再認証要求の公開報告があり、ベンダー側で未解決。
+  - Opera Connectorは個人用Operaの開いているタブを読めるため、機密性の高いタブを開いたまま使わない。
+- Re-evaluation trigger:
+  - 時間を空けた接続確認で再認証要求・切断が再発した場合、再接続のたびにChatGPT側の接続が重複する場合、または必要な操作（クリック・入力）がOperaで行えないTaskが常態化した場合は、本ADRを再評価し、PC03の標準をChrome専用プロファイルへ戻すことを検討する。
