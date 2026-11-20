@@ -106,6 +106,45 @@ Status: `CONNECTED / CONFIGURED / VERIFY_ON_START` (2026-10-12 JST, device-scope
 - Do not modify existing Google registrations, sitemaps, DNS, OAuth credentials or Chrome sessions. API monitoring must remain read-only and must not be scheduled as successful until properly authorized and verified.
 - Local implementation details and recovery procedure are documented on PC03 in the AI_Agent workspace; do not store secrets or local credentials in this public repository.
 
+## ChatGPT → Opera Browser Connector — PC03 (auxiliary re-verification)
+
+Type: Browser Connector / Plugin（ChatGPT plugin v2.0.0）
+
+Status: `CONNECTED / READ / VERIFY_ON_START`（`ks-03`、device-scoped、時間を空けた再確認待ち）
+
+Verified: 2026-11-20 JST
+
+Policy note:
+- 上記「Browser automation — PC03」の **Opera Browser Connectorを既定の自動化経路から外す方針は変更しない**。本節は補助経路としての接続確認記録であり、常用基盤への復帰を意味しない。
+
+Observed before recovery:
+- ChatGPTから一時的にタブ一覧取得・本文読み取り・新規タブ作成に成功した後、ChatGPT側「接続の有効期限が切れています／再接続」とOpera側「無効または期限切れの同意トークン」が繰り返された。
+- ChatGPTアプリのOpera Browser Connector「接続済みアカウント」に同名の接続が2件あり、1件は「再接続」表示、1件は有効表示だった。（確認主体: Claude session、画面確認、2026-11-20 11:2x JST）
+
+Action taken（本人承認済み）:
+- 「再接続」表示の接続1件のみ「接続を解除」し、有効な接続1件を残した。（実施・確認主体: Claude session、2026-11-20 11:24 JST）
+- Operaのブックマーク、Cookie、保存ログイン、プロファイル、PC03のChrome、PC04には変更なし。
+
+Verified after recovery:
+- 11:26 / 11:36 / 11:46 JST: ChatGPTから `list_tabs` 成功（各10件）。11:46は本文読み取りも成功（取得結果に見出しは含まれず）。（ChatGPT出力をClaude sessionで画面確認）
+- 接続先が `ks-03` のOperaであることを、ChatGPTが返したアクティブタブ（example.com）とPC03画面上のOperaの一致で確認。
+- 11:57 JST: 操作前の `list_tabs`（10件）は成功。新規タブ作成はツール許可確認で中断し未完了。
+- 12:24 JST: 新規タブ作成の再テスト成功。作成前10件→作成後11件、`https://example.org/` がアクティブ、既存10タブのID・URLは維持、認証エラーなし。（確認主体: ChatGPT session）
+
+Current assessment:
+- **接続整理後、新規タブ作成まで成功。時間を空けた接続確認は未実施（待ち）。**
+- 重複接続は有力な原因候補だが、原因として確定していない。「解消」とは記録しない。
+- 同種の断続的切断・再認証要求は公開報告がある（例: openai/codex Issue #48022、Opera Forums「Browser Connector repeatedly disconnects」）。外部情報としてClaude sessionで出典確認、追試はしていない。
+
+Limitations / unverified:
+- Opera側で旧Browser Connector拡張（v5.2.0系）と現行のAI Services組み込み機能が併存しているかは未確認。
+- 複数作業の並行時に画面の前面切替が起きないかは未検証。
+
+Recovery rule:
+- 接続エラー時、AIは再接続や接続確認を連続で繰り返さない。read-only probeは1回で止め、再接続は本人が1回だけ行う。
+- 再接続後は「接続済みアカウント」が1件だけであることを確認する。
+- 同じOperaへ別のAIクライアント（例: 別アカウント、Claude）を追加接続する場合は事前に判断し、同時に増やさない。
+
 ## ChatGPT → Remote Desktop Commander → Google Cloud CLI
 
 Type: Remote computer bridge / local CLI execution path
